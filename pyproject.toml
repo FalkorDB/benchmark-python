@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "falkordb-benchmark"
+version = "0.1.0"
+description = "FalkorDB population & query benchmark tool"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+    "falkordb>=1.0.0",
+    "click>=8.1",
+    "rich>=13.0",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+benchmark = "benchmark.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["benchmark*"]
