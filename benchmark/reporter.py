@@ -22,29 +22,24 @@ def print_report(result: BenchmarkResult) -> None:
         show_lines=True,
     )
 
+    table.add_column("Test Type", style="magenta", no_wrap=True)
     table.add_column("Tier (nodes)", justify="right", style="cyan", no_wrap=True)
     table.add_column("Batch Size", justify="right")
     table.add_column("Total Time", justify="right", style="green")
     table.add_column("Nodes/sec", justify="right", style="bold green")
-    table.add_column("p50 (ms)", justify="right")
-    table.add_column("p90 (ms)", justify="right")
-    table.add_column("p95 (ms)", justify="right")
-    table.add_column("p99 (ms)", justify="right", style="yellow")
-    table.add_column("p99.9 (ms)", justify="right", style="red")
+    table.add_column("Avg Batch (ms)", justify="right")
+    table.add_column("Batches", justify="right")
     table.add_column("Errors", justify="right", style="red")
 
     for tier in result.tiers:
-        total_str = f"{tier.total_time_s:.2f}s"
         table.add_row(
+            tier.test_type,
             f"{tier.tier_nodes:,}",
             f"{tier.batch_size:,}",
-            total_str,
+            f"{tier.total_time_s:.2f}s",
             f"{tier.nodes_per_sec:,.0f}",
-            f"{tier.p50_ms:.1f}",
-            f"{tier.p90_ms:.1f}",
-            f"{tier.p95_ms:.1f}",
-            f"{tier.p99_ms:.1f}",
-            f"{tier.p999_ms:.1f}",
+            f"{tier.avg_batch_ms:.1f}",
+            str(len(tier.batches)),
             str(tier.error_count),
         )
 
@@ -68,9 +63,8 @@ def save_json(result: BenchmarkResult, directory: str = "results") -> str:
 
 
 CSV_COLUMNS = [
-    "tier_nodes", "batch_size", "total_time_s", "nodes_per_sec",
-    "p50_ms", "p90_ms", "p95_ms", "p99_ms", "p999_ms",
-    "success_batches", "error_batches", "total_batches",
+    "test_type", "tier_nodes", "batch_size", "total_time_s", "nodes_per_sec",
+    "avg_batch_ms", "success_batches", "error_batches", "total_batches",
 ]
 
 

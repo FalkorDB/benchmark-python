@@ -6,12 +6,14 @@ import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 
-from benchmark.data_gen import PopulationPlan
+from benchmark.data_gen import PopulationPlan, TestType
 from benchmark.falkor_client import BenchmarkClient
 from benchmark.metrics import MetricsCollector, BenchmarkResult
 from benchmark.reporter import print_report, save_json, save_csv
 
-DEFAULT_TIERS = [10_000, 50_000, 100_000, 500_000]
+DEFAULT_TIERS = [10_000, 50_000, 100_000, 500_000, 1_000_000]
+
+ALL_TEST_TYPES = [TestType.BASELINE, TestType.UUID, TestType.UUID_INDEXED]
 
 console = Console()
 
@@ -20,22 +22,34 @@ def _run_tier(
     client: BenchmarkClient,
     tier_nodes: int,
     batch_size: int,
+    test_type: TestType,
     label: str,
     progress: Progress,
 ) -> "benchmark.metrics.TierResult":
-    """Populate one tier and collect metrics."""
-    from benchmark.metrics import TierResult  # avoid circular (already imported above, this is fine)
+    """Populate one tier with a specific test type and collect metrics."""
 
-    plan = PopulationPlan(tier_nodes=tier_nodes, batch_size=batch_size, label=label)
-    collector = MetricsCollector(tier_nodes=tier_nodes, batch_size=batch_size)
-
-    task = progress.add_task(
-        f"[cyan]{tier_nodes:>9,} nodes", total=plan.num_batches
+    plan = PopulationPlan(
+        tier_nodes=tier_nodes,
+        batch_size=batch_size,
+        test_type=test_type,
+        label=label,
+    )
+    collector = MetricsCollector(
+        tier_nodes=tier_nodes,
+        batch_size=batch_size,
+        test_type=test_type.value,
     )
 
-    # Fresh graph for each tier
+    task = progress.add_task(
+        f"[cyan]{test_type.value:<12} {tier_nodes:>9,} nodes",
+        total=plan.num_batches,
+    )
+
+    # Fresh graph for each run
     client.delete_graph()
     client.create_index(label)
+    if test_type == TestType.UUID_INDEXED:
+        client.create_uuid_index(label)
 
     collector.start()
     for batch_idx, batch_data in plan.iter_batches():
@@ -75,21 +89,36 @@ def main():
     "--tiers",
     multiple=True,
     type=int,
-    help="Node counts per tier (repeatable). Defaults to 10000 50000 100000 500000.",
+    help="Node counts per tier (repeatable). Defaults to 10K 50K 100K 500K 1M.",
 )
 @click.option("--batch-size", default=500, show_default=True, help="Nodes per UNWIND batch")
 @click.option("--label", default="Entity", show_default=True, help="Node label")
+@click.option(
+    "--tests",
+    multiple=True,
+    type=click.Choice(["baseline", "uuid", "uuid_indexed"], case_sensitive=False),
+    help="Test types to run (repeatable). Defaults to all three.",
+)
 @click.option("--save/--no-save", default=True, show_default=True, help="Save JSON results")
 @click.option("--csv/--no-csv", "save_csv_flag", default=True, show_default=True, help="Save CSV results")
-def populate(host: str, port: int, graph: str, tiers: tuple[int, ...], batch_size: int, label: str, save: bool, save_csv_flag: bool):
-    """Run the population benchmark across growth tiers."""
+def populate(host: str, port: int, graph: str, tiers: tuple[int, ...], batch_size: int, label: str, tests: tuple[str, ...], save: bool, save_csv_flag: bool):
+    """Run the population benchmark across growth tiers.
+
+    Runs three test types per tier by default:
+      baseline     — 100 properties, no UUID
+      uuid         — 100 properties + UUID property
+      uuid_indexed — 100 properties + UUID property + index on UUID
+    """
     tier_list = list(tiers) if tiers else DEFAULT_TIERS
+    test_types = [TestType(t) for t in tests] if tests else ALL_TEST_TYPES
+    total_runs = len(tier_list) * len(test_types)
 
     console.print(f"\n[bold]FalkorDB Population Benchmark[/bold]")
     console.print(f"  Host: {host}:{port}  Graph: {graph}")
     console.print(f"  Tiers: {', '.join(f'{t:,}' for t in tier_list)} nodes")
+    console.print(f"  Tests: {', '.join(t.value for t in test_types)}")
     console.print(f"  Batch size: {batch_size:,}  Label: {label}")
-    console.print(f"  Properties per node: 100\n")
+    console.print(f"  Properties per node: 100  |  Total runs: {total_runs}\n")
 
     client = BenchmarkClient(host=host, port=port, graph_name=graph)
     benchmark_result = BenchmarkResult()
@@ -103,8 +132,11 @@ def populate(host: str, port: int, graph: str, tiers: tuple[int, ...], batch_siz
         console=console,
     ) as progress:
         for tier_nodes in tier_list:
-            tier_result = _run_tier(client, tier_nodes, batch_size, label, progress)
-            benchmark_result.tiers.append(tier_result)
+            for test_type in test_types:
+                tier_result = _run_tier(
+                    client, tier_nodes, batch_size, test_type, label, progress
+                )
+                benchmark_result.tiers.append(tier_result)
 
     print_report(benchmark_result)
 

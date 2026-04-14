@@ -4,7 +4,7 @@ from benchmark.metrics import MetricsCollector, BenchmarkResult
 
 
 def test_metrics_collector_basic():
-    mc = MetricsCollector(tier_nodes=100, batch_size=50)
+    mc = MetricsCollector(tier_nodes=100, batch_size=50, test_type="baseline")
     mc.start()
     mc.record_batch(0, 50, 10.5, True)
     mc.record_batch(1, 50, 12.3, True)
@@ -12,15 +12,16 @@ def test_metrics_collector_basic():
 
     assert result.tier_nodes == 100
     assert result.batch_size == 50
+    assert result.test_type == "baseline"
     assert result.success_count == 2
     assert result.error_count == 0
     assert result.total_time_s > 0
     assert result.nodes_per_sec > 0
-    assert result.p50_ms > 0
+    assert result.avg_batch_ms > 0
 
 
 def test_metrics_collector_with_errors():
-    mc = MetricsCollector(tier_nodes=100, batch_size=50)
+    mc = MetricsCollector(tier_nodes=100, batch_size=50, test_type="uuid")
     mc.start()
     mc.record_batch(0, 50, 10.0, True)
     mc.record_batch(1, 50, 999.0, False, error="connection lost")
@@ -31,7 +32,7 @@ def test_metrics_collector_with_errors():
 
 
 def test_benchmark_result_to_dict():
-    mc = MetricsCollector(tier_nodes=50, batch_size=25)
+    mc = MetricsCollector(tier_nodes=50, batch_size=25, test_type="uuid_indexed")
     mc.start()
     mc.record_batch(0, 25, 5.0, True)
     mc.record_batch(1, 25, 6.0, True)
@@ -42,5 +43,6 @@ def test_benchmark_result_to_dict():
 
     assert len(d["tiers"]) == 1
     assert d["tiers"][0]["tier_nodes"] == 50
+    assert d["tiers"][0]["test_type"] == "uuid_indexed"
     assert "nodes_per_sec" in d["tiers"][0]
-    assert "p99_ms" in d["tiers"][0]
+    assert "avg_batch_ms" in d["tiers"][0]

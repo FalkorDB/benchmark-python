@@ -65,3 +65,10 @@ class BenchmarkClient:
             self._graph.query(f"CREATE INDEX FOR (n:{label}) ON (n.id)")
         except Exception:
             pass
+
+    def create_uuid_index(self, label: str = "Entity") -> None:
+        """Create an index on the uuid property."""
+        try:
+            self._graph.query(f"CREATE INDEX FOR (n:{label}) ON (n.uuid)")
+        except Exception:
+            pass
