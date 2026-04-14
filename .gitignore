@@ -29,4 +29,5 @@ cache/
 backups/
 results/
 *.json
+*.csv
 !pyproject.toml

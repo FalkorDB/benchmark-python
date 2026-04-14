@@ -9,7 +9,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeEl
 from benchmark.data_gen import PopulationPlan
 from benchmark.falkor_client import BenchmarkClient
 from benchmark.metrics import MetricsCollector, BenchmarkResult
-from benchmark.reporter import print_report, save_json
+from benchmark.reporter import print_report, save_json, save_csv
 
 DEFAULT_TIERS = [10_000, 50_000, 100_000, 500_000]
 
@@ -80,7 +80,8 @@ def main():
 @click.option("--batch-size", default=500, show_default=True, help="Nodes per UNWIND batch")
 @click.option("--label", default="Entity", show_default=True, help="Node label")
 @click.option("--save/--no-save", default=True, show_default=True, help="Save JSON results")
-def populate(host: str, port: int, graph: str, tiers: tuple[int, ...], batch_size: int, label: str, save: bool):
+@click.option("--csv/--no-csv", "save_csv_flag", default=True, show_default=True, help="Save CSV results")
+def populate(host: str, port: int, graph: str, tiers: tuple[int, ...], batch_size: int, label: str, save: bool, save_csv_flag: bool):
     """Run the population benchmark across growth tiers."""
     tier_list = list(tiers) if tiers else DEFAULT_TIERS
 
@@ -109,7 +110,13 @@ def populate(host: str, port: int, graph: str, tiers: tuple[int, ...], batch_siz
 
     if save:
         path = save_json(benchmark_result)
-        console.print(f"[dim]Results saved to {path}[/dim]\n")
+        console.print(f"[dim]Results saved to {path}[/dim]")
+
+    if save_csv_flag:
+        csv_path = save_csv(benchmark_result)
+        console.print(f"[dim]CSV saved to {csv_path}[/dim]")
+
+    console.print()
 
     # Cleanup
     client.delete_graph()
