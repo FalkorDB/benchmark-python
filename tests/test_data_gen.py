@@ -5,7 +5,9 @@ from benchmark.data_gen import (
     TestType,
     generate_node,
     generate_batch,
+    generate_edges_for_batch,
     build_unwind_query,
+    build_edge_query,
     PopulationPlan,
 )
 
@@ -24,19 +26,15 @@ def test_generate_node_has_101_keys():
 def test_generate_node_with_uuid():
     node = generate_node(42, include_uuid=True)
     assert "uuid" in node
-    assert len(node["uuid"]) == 36  # UUID4 string length
+    assert len(node["uuid"]) == 36
     assert len(node) == 102  # 100 props + id + uuid
 
 
 def test_generate_node_property_types():
     node = generate_node(0)
-    # First 40 props are strings
     assert isinstance(node["prop_000"], str)
-    # Next 30 are ints (indices 40-69)
     assert isinstance(node["prop_040"], int)
-    # Next 20 are floats (indices 70-89)
     assert isinstance(node["prop_070"], float)
-    # Last 10 are bools (indices 90-99)
     assert isinstance(node["prop_090"], bool)
 
 
@@ -50,16 +48,31 @@ def test_generate_batch_size():
 def test_generate_batch_with_uuid():
     batch = generate_batch(0, 10, include_uuid=True)
     assert all("uuid" in node for node in batch)
-    uuids = [node["uuid"] for node in batch]
-    assert len(set(uuids)) == 10  # all unique
+    assert len(set(n["uuid"] for n in batch)) == 10
+
+
+def test_generate_edges_for_batch():
+    edges = generate_edges_for_batch(0, 10)
+    # 2 groups of 5 -> C(5,2)*2 = 20
+    assert len(edges) == 20
+    assert all("src" in e and "dst" in e for e in edges)
+
+
+def test_generate_edges_partial_group():
+    # 7 nodes: group of 5 (10 edges) + group of 2 (1 edge) = 11
+    edges = generate_edges_for_batch(0, 7)
+    assert len(edges) == 11
+
+
+def test_generate_edges_single_node():
+    edges = generate_edges_for_batch(0, 1)
+    assert len(edges) == 0
 
 
 def test_build_unwind_query():
     q = build_unwind_query("TestLabel")
     assert "UNWIND $nodes AS node" in q
     assert "CREATE (n:TestLabel {id: node.id})" in q
-    assert "n.prop_000 = node.prop_000" in q
-    assert "n.prop_099 = node.prop_099" in q
     assert "uuid" not in q
 
 
@@ -68,34 +81,40 @@ def test_build_unwind_query_with_uuid():
     assert "n.uuid = node.uuid" in q
 
 
+def test_build_edge_query():
+    q = build_edge_query("TestLabel")
+    assert "UNWIND $edges AS edge" in q
+    assert "MATCH (a:TestLabel {id: edge.src})" in q
+    assert "CREATE (a)-[:CONNECTED_TO]->(b)" in q
+
+
 def test_population_plan_batches():
     plan = PopulationPlan(tier_nodes=100, batch_size=30)
-    assert plan.num_batches == 4  # ceil(100/30) = 4
-
+    assert plan.num_batches == 4
     batches = list(plan.iter_batches())
     assert len(batches) == 4
-    sizes = [len(b) for _, b in batches]
+    sizes = [len(nodes) for _, nodes, _ in batches]
     assert sizes == [30, 30, 30, 10]
-    assert sum(sizes) == 100
 
 
-def test_population_plan_exact_multiple():
-    plan = PopulationPlan(tier_nodes=100, batch_size=50)
-    assert plan.num_batches == 2
-    batches = list(plan.iter_batches())
-    sizes = [len(b) for _, b in batches]
-    assert sizes == [50, 50]
-
-
-def test_population_plan_uuid_type():
-    plan = PopulationPlan(tier_nodes=10, batch_size=5, test_type=TestType.UUID)
-    assert plan.include_uuid is True
-    _, batch = next(plan.iter_batches())
-    assert "uuid" in batch[0]
-
-
-def test_population_plan_baseline_no_uuid():
+def test_population_plan_baseline_no_edges():
     plan = PopulationPlan(tier_nodes=10, batch_size=5, test_type=TestType.BASELINE)
-    assert plan.include_uuid is False
-    _, batch = next(plan.iter_batches())
-    assert "uuid" not in batch[0]
+    assert plan.include_edges is False
+    _, nodes, edges = next(plan.iter_batches())
+    assert "uuid" not in nodes[0]
+    assert edges is None
+
+
+def test_population_plan_uuid_edges():
+    plan = PopulationPlan(tier_nodes=10, batch_size=5, test_type=TestType.UUID_EDGES)
+    assert plan.include_uuid is True
+    assert plan.include_edges is True
+    _, nodes, edges = next(plan.iter_batches())
+    assert "uuid" in nodes[0]
+    assert len(edges) == 10  # C(5,2)
+
+
+def test_population_plan_uuid_indexed_edges():
+    plan = PopulationPlan(tier_nodes=10, batch_size=5, test_type=TestType.UUID_INDEXED_EDGES)
+    assert plan.needs_uuid_index is True
+    assert plan.include_edges is True

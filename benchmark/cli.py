@@ -6,14 +6,14 @@ import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 
-from benchmark.data_gen import PopulationPlan, TestType
+from benchmark.data_gen import PopulationPlan, TestType, _INDEXED_TYPES, _EDGE_TYPES
 from benchmark.falkor_client import BenchmarkClient
 from benchmark.metrics import MetricsCollector, BenchmarkResult
 from benchmark.reporter import print_report, save_json, save_csv
 
 DEFAULT_TIERS = [10_000, 50_000, 100_000, 500_000, 1_000_000]
 
-ALL_TEST_TYPES = [TestType.BASELINE, TestType.UUID, TestType.UUID_INDEXED]
+ALL_TEST_TYPES = list(TestType)
 
 console = Console()
 
@@ -41,25 +41,38 @@ def _run_tier(
     )
 
     task = progress.add_task(
-        f"[cyan]{test_type.value:<12} {tier_nodes:>9,} nodes",
+        f"[cyan]{test_type.value:<20} {tier_nodes:>9,} nodes",
         total=plan.num_batches,
     )
 
     # Fresh graph for each run
     client.delete_graph()
     client.create_index(label)
-    if test_type == TestType.UUID_INDEXED:
+    if plan.needs_uuid_index:
         client.create_uuid_index(label)
 
     collector.start()
-    for batch_idx, batch_data in plan.iter_batches():
-        result = client.execute_query(plan.query, params={"nodes": batch_data})
+    for batch_idx, node_data, edge_data in plan.iter_batches():
+        # Create nodes
+        result = client.execute_query(plan.query, params={"nodes": node_data})
+        batch_ms = result.duration_ms
+        batch_ok = result.success
+        batch_err = result.error
+
+        # Create edges if this test type includes them
+        if edge_data and batch_ok:
+            edge_result = client.execute_query(plan.edge_query, params={"edges": edge_data})
+            batch_ms += edge_result.duration_ms
+            if not edge_result.success:
+                batch_ok = False
+                batch_err = edge_result.error
+
         collector.record_batch(
             batch_index=batch_idx,
-            batch_size=len(batch_data),
-            duration_ms=result.duration_ms,
-            success=result.success,
-            error=result.error,
+            batch_size=len(node_data),
+            duration_ms=batch_ms,
+            success=batch_ok,
+            error=batch_err,
         )
         progress.update(task, advance=1)
 
@@ -96,18 +109,22 @@ def main():
 @click.option(
     "--tests",
     multiple=True,
-    type=click.Choice(["baseline", "uuid", "uuid_indexed"], case_sensitive=False),
-    help="Test types to run (repeatable). Defaults to all three.",
+    type=click.Choice([t.value for t in TestType], case_sensitive=False),
+    help="Test types to run (repeatable). Defaults to all five.",
 )
 @click.option("--save/--no-save", default=True, show_default=True, help="Save JSON results")
 @click.option("--csv/--no-csv", "save_csv_flag", default=True, show_default=True, help="Save CSV results")
 def populate(host: str, port: int, graph: str, tiers: tuple[int, ...], batch_size: int, label: str, tests: tuple[str, ...], save: bool, save_csv_flag: bool):
     """Run the population benchmark across growth tiers.
 
-    Runs three test types per tier by default:
-      baseline     — 100 properties, no UUID
-      uuid         — 100 properties + UUID property
-      uuid_indexed — 100 properties + UUID property + index on UUID
+    Runs five test types per tier by default:
+
+    \b
+      baseline           — 100 properties, no UUID
+      uuid               — 100 properties + UUID property
+      uuid_indexed       — 100 properties + UUID + index on UUID
+      uuid_edges         — UUID + 10 edges per 5 nodes
+      uuid_indexed_edges — UUID + index + 10 edges per 5 nodes
     """
     tier_list = list(tiers) if tiers else DEFAULT_TIERS
     test_types = [TestType(t) for t in tests] if tests else ALL_TEST_TYPES
