@@ -1,10 +1,14 @@
 # FalkorDB CRM Benchmark — Detailed Results & Workload Reference
 
 **Run:** `results-cloud/workloads_20260422_005515.csv` (10 workloads × 2 tiers = 20 rows)
-**Target:** FalkorDB Cloud `r-ercqm6xbqm.instance-if8kk23ls...:6379` (stronger instance)
-**Driver:** `scripts/full_run.sh` — single idempotent init then `suite --skip-init`
+**Target:** FalkorDB Cloud — **standalone** on AWS EC2 **c6i.8xlarge** (32 vCPU / 64 GiB), us-east-2
+**Client:** AWS EC2 **c4.xlarge** (4 vCPU / 7.5 GiB), us-east-2 — single client, serial batches
+**Driver script:** `scripts/full_run.sh` — single idempotent init then `suite --skip-init`
 **Per-workload params:** `ops=25,000`, `batch_size=1,000` → 25 batches per row
 **Indexed:** all rows used the indexed init graph (`crm_init_<tier>`, composite index on `(:entity {uuid_hi, uuid_lo})`)
+
+> Full environment details (instance specs, region, network topology, reproducer)
+> are pinned in [`info/benchmark-environment.md`](./benchmark-environment.md).
 
 ---
 

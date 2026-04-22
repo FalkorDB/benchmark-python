@@ -14,6 +14,21 @@ The slow path's per-batch p50 latency varies wildly with tier size in a way the
 fast path does not, suggesting the cost is in query planning or in the
 `SET label` / `REMOVE label` write path — **not** in the index lookup.
 
+## Environment
+
+| | |
+|--|--|
+| **FalkorDB deployment** | Cloud, **standalone** (single node, no replica) |
+| **Server host**         | AWS EC2 **c6i.8xlarge** (32 vCPU, 64 GiB RAM), us-east-2 |
+| **Client host**         | AWS EC2 **c4.xlarge** (4 vCPU, 7.5 GiB RAM), us-east-2 |
+| **Network**             | Same region, public endpoint, TLS off |
+| **Driver**              | `falkordb-py`, single client, serial batches |
+| **Concurrency**         | 1                                                |
+| **Batch size**          | 1,000 ops/batch                                   |
+| **Ops per workload**    | 25,000                                            |
+
+Full environment doc: [`info/benchmark-environment.md`](./benchmark-environment.md)
+
 ## Reproducer
 
 Composite range index on `(uuid_hi, uuid_lo)` for `:entity`. Graph pre-loaded with
