@@ -5,7 +5,7 @@ labels: [performance, query-planner, MERGE]
 
 ## Summary
 
-Reproduces a customer-reported regression (Reevo / Alex). The single-statement upsert
+Reproduces a customer-reported regression (customer). The single-statement upsert
 pattern that combines `MERGE` with an unconditional `SET label` and `REMOVE label`
 runs **2.7× to 10.3× slower** than a logically-equivalent `OPTIONAL MATCH + FOREACH/CASE`
 rewrite on the same data, on the same instance.
@@ -57,7 +57,7 @@ operate on the same underlying graphs and target the same uuid keys.
 
 This is the upsert pattern customers reach for naturally — `MERGE` on the natural
 key, then unconditionally write the latest property snapshot and adjust labels.
-It is also exactly the pattern reported by Alex (Reevo) in their CDC ingestion
+It is also exactly the pattern reported by Alex (customer) in their CDC ingestion
 where `graph.write` time was 9.1× slower on insert vs update for the same query.
 
 ## Hypothesis (please confirm or refute)

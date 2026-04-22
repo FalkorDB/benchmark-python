@@ -263,7 +263,7 @@ benchmark run --tier 250000 --workload promote_inactive --ops 25000 --batch-size
 
 ---
 
-## W7a — `upsert_label_swap` ⚠️ Customer scenario (Reevo)
+## W7a — `upsert_label_swap` ⚠️ Customer scenario (customer)
 
 **Simulates:** The exact pattern from the customer ticket — single-statement upsert that always sets props and swaps labels (idempotent regardless of whether the row exists).
 

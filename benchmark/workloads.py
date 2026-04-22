@@ -88,7 +88,7 @@ _Q_W6 = (
     "REMOVE n:inactive SET n:account"
 )
 
-# W7 — customer scenario (Reevo): single-MERGE upsert that unconditionally
+# W7 — customer scenario (customer): single-MERGE upsert that unconditionally
 # SETs properties, SETs a new label and REMOVEs :inactive. This combines
 # the create + update + label-swap path in one statement; on insert it is
 # reportedly ~9× slower than on update.
