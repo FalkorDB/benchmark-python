@@ -18,10 +18,22 @@ class QueryResult:
 class BenchmarkClient:
     """Synchronous FalkorDB client wrapper used by the benchmark runner."""
 
-    def __init__(self, host: str = "localhost", port: int = 6379, graph_name: str = "benchmark") -> None:
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 6379,
+        graph_name: str = "benchmark",
+        username: str | None = None,
+        password: str | None = None,
+    ) -> None:
         from falkordb import FalkorDB
 
-        self._db = FalkorDB(host=host, port=port)
+        kwargs: dict = {"host": host, "port": port}
+        if username:
+            kwargs["username"] = username
+        if password:
+            kwargs["password"] = password
+        self._db = FalkorDB(**kwargs)
         self._graph_name = graph_name
         self._graph = self._db.select_graph(graph_name)
 
@@ -59,16 +71,11 @@ class BenchmarkClient:
         except Exception:
             pass
 
-    def create_index(self, label: str = "Entity") -> None:
-        """Create an index on the id property."""
+    def create_uuid_pair_index(self, label: str = "entity") -> None:
+        """Create a composite range index on (uuid_hi, uuid_lo) for the given label."""
         try:
-            self._graph.query(f"CREATE INDEX FOR (n:{label}) ON (n.id)")
-        except Exception:
-            pass
-
-    def create_uuid_index(self, label: str = "Entity") -> None:
-        """Create an index on the uuid property."""
-        try:
-            self._graph.query(f"CREATE INDEX FOR (n:{label}) ON (n.uuid)")
+            self._graph.query(
+                f"CREATE INDEX FOR (n:{label}) ON (n.uuid_hi, n.uuid_lo)"
+            )
         except Exception:
             pass
