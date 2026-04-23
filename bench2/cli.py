@@ -33,11 +33,15 @@ def _client(host: str, port: int, graph: str, username: str | None, password: st
               help="Create composite uuid index BEFORE loading.")
 @click.option("--nodes", default=100_000, show_default=True, type=int)
 @click.option("--batch-size", default=100, show_default=True, type=int)
-def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size) -> None:
+@click.option("--extra-contacts", default=0, show_default=True, type=int,
+              help="Also load N :entity:contact nodes (sharing the composite index) "
+                   "to test noisy-neighbor effects on the indexed account-MERGE.")
+def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, extra_contacts) -> None:
     """Drop the graph and load the baseline."""
     client = _client(host, port, graph, username, password)
-    n, e = init_graph(client, num_nodes=nodes, indexed=indexed, batch_size=batch_size)
-    click.echo(f"OK — {n:,} nodes / {e:,} edges (indexed={indexed})")
+    n, e = init_graph(client, num_nodes=nodes, indexed=indexed, batch_size=batch_size,
+                      extra_contacts=extra_contacts)
+    click.echo(f"OK — {n:,} nodes / {e:,} edges (indexed={indexed}, extra_contacts={extra_contacts:,})")
 
 
 @main.command("run")
