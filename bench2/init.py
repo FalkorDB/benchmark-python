@@ -141,15 +141,28 @@ def init_graph_add_new_node(
     indexed: bool = True,
     batch_size: int = 1000,
     verbose: bool = True,
+    audit: bool = False,
 ) -> tuple[int, int]:
-    """Init for Test 1 (add_new_node): num_nodes :entity:account 50-prop nodes, no edges.
+    """Init for Test 1 (add_new_node) and Test 2 (add_new_node_with_audit).
 
-    Uses the SAME query and op shape as the bench (ADD_NEW_NODE_QUERY) so
-    that init writes are byte-for-byte equivalent to bench writes. The
-    bench then continues with start_id == num_nodes, producing a
-    contiguous uuid range with no overlap.
+    num_nodes :entity:account 50-prop nodes, no edges. Uses the SAME
+    query and op shape as the bench so init writes are byte-for-byte
+    equivalent. Bench then continues with start_id == num_nodes,
+    producing a contiguous uuid range with no overlap.
+
+    If audit=True, uses ADD_NEW_NODE_WITH_AUDIT_QUERY (Test 2) which adds
+    two SET clauses after the MERGE (updated_at, version).
     """
-    from bench2.workload import ADD_NEW_NODE_QUERY, iter_add_new_node_batches
+    from bench2.workload import (
+        ADD_NEW_NODE_QUERY,
+        ADD_NEW_NODE_WITH_AUDIT_QUERY,
+        iter_add_new_node_batches,
+        iter_add_new_node_with_audit_batches,
+    )
+
+    query = ADD_NEW_NODE_WITH_AUDIT_QUERY if audit else ADD_NEW_NODE_QUERY
+    iter_fn = iter_add_new_node_with_audit_batches if audit else iter_add_new_node_batches
+    label_for_log = "Test 2 audit" if audit else "Test 1"
 
     if verbose:
         print(f"[init] dropping graph '{client._graph_name}'", flush=True)
@@ -162,13 +175,14 @@ def init_graph_add_new_node(
         client.create_uuid_pair_index("entity")
 
     if verbose:
-        print(f"[init] loading {num_nodes:,} :entity:account nodes (50 props each, no edges)", flush=True)
+        print(f"[init] loading {num_nodes:,} :entity:account nodes "
+              f"(50 props each, no edges, {label_for_log})", flush=True)
 
     batches_total = (num_nodes + batch_size - 1) // batch_size
     batches_done = 0
-    for ops in iter_add_new_node_batches(start_id=0, num_ops=num_nodes,
-                                         batch_size=batch_size, seed=1):
-        client.execute_query(ADD_NEW_NODE_QUERY, params={"ops": ops})
+    for ops in iter_fn(start_id=0, num_ops=num_nodes,
+                      batch_size=batch_size, seed=1):
+        client.execute_query(query, params={"ops": ops})
         batches_done += 1
         if verbose and batches_done % 5 == 0:
             print(f"[init]   {batches_done}/{batches_total} batches "

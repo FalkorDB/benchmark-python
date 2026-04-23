@@ -8,6 +8,7 @@ customer's reported slow-MERGE pattern (W7a) on the indexed graph.
 from __future__ import annotations
 
 import random
+import time
 from typing import Iterator
 
 from bench2.data import random_props, uuid_for_id
@@ -59,6 +60,19 @@ ADD_NEW_NODE_QUERY = (
     "UNWIND $ops AS op "
     "MERGE (n:entity:account {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
     "  ON CREATE SET n = op.props"
+)
+
+
+# Test 2 (add_new_node_with_audit) — same MERGE shape as Test 1, plus two
+# audit SETs after the merge: updated_at (assigned) and version
+# (read-then-write via coalesce). Measures the marginal cost of two extra
+# SET clauses on top of the create-branch MERGE.
+ADD_NEW_NODE_WITH_AUDIT_QUERY = (
+    "UNWIND $ops AS op "
+    "MERGE (n:entity:account {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
+    "  ON CREATE SET n = op.props "
+    "SET n.updated_at = op.updated_at "
+    "SET n.version = coalesce(n.version, 0) + 1"
 )
 
 
@@ -144,6 +158,31 @@ def iter_add_new_node_batches(
     ops: list[dict] = []
     for k in range(num_ops):
         ops.append(make_add_new_node_op(start_id + k, rng))
+        if len(ops) >= batch_size:
+            yield ops
+            ops = []
+    if ops:
+        yield ops
+
+
+def make_add_new_node_with_audit_op(n_id: int, rng: random.Random) -> dict:
+    """Op for Test 2: same as Test 1 plus an updated_at timestamp."""
+    op = make_add_new_node_op(n_id, rng)
+    op["updated_at"] = int(time.time() * 1000)
+    return op
+
+
+def iter_add_new_node_with_audit_batches(
+    start_id: int,
+    num_ops: int,
+    batch_size: int,
+    seed: int = 42,
+) -> Iterator[list[dict]]:
+    """Yield batches of audit-stamped 50-prop add_new_node ops (Test 2)."""
+    rng = random.Random(seed)
+    ops: list[dict] = []
+    for k in range(num_ops):
+        ops.append(make_add_new_node_with_audit_op(start_id + k, rng))
         if len(ops) >= batch_size:
             yield ops
             ops = []
