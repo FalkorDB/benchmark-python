@@ -93,6 +93,32 @@ UPSERT_W7_QUERY = (
 )
 
 
+# Test 4 init query — fast lean MERGE that produces the SAME node shape
+# as UPSERT_W7_ACTIVE_QUERY would (50 props + active=true,
+# :entity:account labels) but using ON CREATE SET so init is fast like
+# Test 1. The bench then uses UPSERT_W7_ACTIVE_QUERY against the
+# resulting graph, so what we measure is the bench query, not init.
+ADD_NEW_NODE_ACTIVE_INIT_QUERY = (
+    "UNWIND $ops AS op "
+    "MERGE (n:entity:account {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
+    "  ON CREATE SET n = op.props, n.active = true"
+)
+
+
+# Test 4 (upsert_w7_active) — same as Test 3 but the `:inactive` label
+# swap is replaced with a boolean `active` property assignment. Requires
+# a property index on :entity(active) created at init time. Isolates the
+# cost contribution of the `REMOVE n:inactive` label op vs an equivalent
+# property write.
+UPSERT_W7_ACTIVE_QUERY = (
+    "UNWIND $ops AS op "
+    "MERGE (n:entity {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
+    "SET n = op.props "
+    "SET n:account "
+    "SET n.active = true"
+)
+
+
 def make_pair_op(a_id: int, b_id: int, rng: random.Random) -> dict:
     a_hi, a_lo = uuid_for_id(a_id)
     b_hi, b_lo = uuid_for_id(b_id)

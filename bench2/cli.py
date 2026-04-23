@@ -36,20 +36,25 @@ def _client(host: str, port: int, graph: str, username: str | None, password: st
 @click.option("--extra-contacts", default=0, show_default=True, type=int,
               help="Also load N :entity:contact nodes (sharing the composite index) "
                    "to test noisy-neighbor effects on the indexed account-MERGE.")
-@click.option("--shape", type=click.Choice(["pair", "add_new_node", "add_new_node_with_audit"]),
+@click.option("--shape",
+              type=click.Choice(["pair", "add_new_node", "add_new_node_with_audit",
+                                 "add_new_node_active"]),
               default="pair", show_default=True,
               help="pair = legacy MERGE-pair init with hub/star edges; "
                    "add_new_node = Test 1 init: single :entity:account nodes, 50 props, no edges; "
-                   "add_new_node_with_audit = Test 2 init: same as Test 1 plus updated_at/version SETs.")
+                   "add_new_node_with_audit = Test 2 init: same as Test 1 plus updated_at/version SETs; "
+                   "add_new_node_active = Test 4 init: same as Test 1 plus active=true property and "
+                   "an index on :entity(active).")
 def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, extra_contacts, shape) -> None:
     """Drop the graph and load the baseline."""
     client = _client(host, port, graph, username, password)
-    if shape in ("add_new_node", "add_new_node_with_audit"):
+    if shape in ("add_new_node", "add_new_node_with_audit", "add_new_node_active"):
         if extra_contacts:
             raise click.UsageError(f"--extra-contacts is only supported with --shape pair")
         audit = shape == "add_new_node_with_audit"
+        active = shape == "add_new_node_active"
         n, e = init_graph_add_new_node(client, num_nodes=nodes, indexed=indexed,
-                                       batch_size=batch_size, audit=audit)
+                                       batch_size=batch_size, audit=audit, active=active)
         click.echo(f"OK — {n:,} nodes / {e:,} edges (indexed={indexed}, shape={shape})")
         return
     n, e = init_graph(client, num_nodes=nodes, indexed=indexed, batch_size=batch_size,
@@ -74,13 +79,15 @@ def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, 
 @click.option("--warmup-batches", default=10, show_default=True, type=int)
 @click.option("--workload",
               type=click.Choice(["pair", "upsert", "foreach", "add_new_node",
-                                 "add_new_node_with_audit", "upsert_w7"]),
+                                 "add_new_node_with_audit", "upsert_w7", "upsert_w7_active"]),
               default="pair", show_default=True,
               help="pair = MERGE-pair; upsert = W7 slow query; foreach = W7 FOREACH workaround; "
                    "add_new_node = Test 1 single MERGE :entity:account with 50 props; "
                    "add_new_node_with_audit = Test 2 same as add_new_node + updated_at/version SETs; "
                    "upsert_w7 = Test 3 W7 customer pattern at 50-prop scale "
-                   "(MERGE :entity, SET props, SET :account, REMOVE :inactive).")
+                   "(MERGE :entity, SET props, SET :account, REMOVE :inactive); "
+                   "upsert_w7_active = Test 4 same as upsert_w7 but uses SET n.active=true "
+                   "instead of REMOVE n:inactive.")
 def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops, batch_size, warmup_batches, workload) -> None:
     """Run the measured benchmark against an existing init graph."""
     client = _client(host, port, graph, username, password)
@@ -102,6 +109,9 @@ def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops,
     elif workload == "upsert_w7":
         from bench2.workload import UPSERT_W7_QUERY, iter_add_new_node_batches
         extra = {"query": UPSERT_W7_QUERY, "iter_fn": iter_add_new_node_batches}
+    elif workload == "upsert_w7_active":
+        from bench2.workload import UPSERT_W7_ACTIVE_QUERY, iter_add_new_node_batches
+        extra = {"query": UPSERT_W7_ACTIVE_QUERY, "iter_fn": iter_add_new_node_batches}
     r = run_benchmark(
         client, name=name, indexed=indexed, start_id=start_id,
         num_pairs=ops, batch_size=batch_size, warmup_batches=warmup_batches,

@@ -142,27 +142,48 @@ def init_graph_add_new_node(
     batch_size: int = 1000,
     verbose: bool = True,
     audit: bool = False,
+    active: bool = False,
 ) -> tuple[int, int]:
-    """Init for Test 1 (add_new_node) and Test 2 (add_new_node_with_audit).
+    """Init for Test 1 (add_new_node), Test 2 (add_new_node_with_audit),
+    and Test 4 (add_new_node_active).
 
     num_nodes :entity:account 50-prop nodes, no edges. Uses the SAME
     query and op shape as the bench so init writes are byte-for-byte
     equivalent. Bench then continues with start_id == num_nodes,
     producing a contiguous uuid range with no overlap.
 
-    If audit=True, uses ADD_NEW_NODE_WITH_AUDIT_QUERY (Test 2) which adds
-    two SET clauses after the MERGE (updated_at, version).
+    audit=True  → uses ADD_NEW_NODE_WITH_AUDIT_QUERY (Test 2).
+    active=True → uses UPSERT_W7_ACTIVE_QUERY (Test 4) and additionally
+                  creates a property index on :entity(active) so the
+                  bench measures the indexed property-write path. Also
+                  produces nodes with :entity:account labels and an
+                  `active=true` property + the 50-prop bag.
     """
     from bench2.workload import (
         ADD_NEW_NODE_QUERY,
         ADD_NEW_NODE_WITH_AUDIT_QUERY,
+        ADD_NEW_NODE_ACTIVE_INIT_QUERY,
         iter_add_new_node_batches,
         iter_add_new_node_with_audit_batches,
     )
 
-    query = ADD_NEW_NODE_WITH_AUDIT_QUERY if audit else ADD_NEW_NODE_QUERY
-    iter_fn = iter_add_new_node_with_audit_batches if audit else iter_add_new_node_batches
-    label_for_log = "Test 2 audit" if audit else "Test 1"
+    if audit and active:
+        raise ValueError("audit and active are mutually exclusive")
+
+    if active:
+        # Init uses the lean ON CREATE SET form (fast); bench will use
+        # UPSERT_W7_ACTIVE_QUERY against the resulting graph.
+        query = ADD_NEW_NODE_ACTIVE_INIT_QUERY
+        iter_fn = iter_add_new_node_batches
+        label_for_log = "Test 4 active"
+    elif audit:
+        query = ADD_NEW_NODE_WITH_AUDIT_QUERY
+        iter_fn = iter_add_new_node_with_audit_batches
+        label_for_log = "Test 2 audit"
+    else:
+        query = ADD_NEW_NODE_QUERY
+        iter_fn = iter_add_new_node_batches
+        label_for_log = "Test 1"
 
     if verbose:
         print(f"[init] dropping graph '{client._graph_name}'", flush=True)
@@ -173,6 +194,17 @@ def init_graph_add_new_node(
         if verbose:
             print(f"[init] creating composite index :entity(uuid_hi, uuid_lo)", flush=True)
         client.create_uuid_pair_index("entity")
+        if active:
+            if verbose:
+                print(f"[init] creating property index :entity(active)", flush=True)
+            try:
+                client._graph.query("CREATE INDEX FOR (n:entity) ON (n.active)")
+            except Exception as e:
+                msg = str(e).lower()
+                if "already" in msg or "exists" in msg:
+                    pass
+                else:
+                    raise
 
     if verbose:
         print(f"[init] loading {num_nodes:,} :entity:account nodes "
