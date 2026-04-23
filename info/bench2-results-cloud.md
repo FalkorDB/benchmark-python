@@ -707,3 +707,109 @@ for SIZE in 500000 1000000 1500000; do
 done
 ```
 
+---
+
+## Test 3 — `upsert_w7` (W7 customer pattern at 50-prop scale)
+
+The exact customer-reported W7 upsert pattern, run at the Test 1/2 tier
+ladder with the same 50-prop CRM record so the comparison is direct.
+
+```cypher
+MERGE (n:entity {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})  -- :entity only
+SET n = $props          -- 50 props rewritten unconditionally
+SET n:account           -- label add unconditional
+REMOVE n:inactive       -- label remove unconditional
+```
+
+Init shape (`--shape add_new_node`) is identical to Test 1/2 — only the
+bench query differs.
+
+### Combined Test 1 vs Test 2 vs Test 3
+
+| Tier | T1 ms/op | T2 ms/op | **T3 ms/op** | T3 ops/s | T3 p95 | T3 p99 | T3 / T1 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 0.141 | **4.045** | **244**   | 4.44  | 4.46  | **32.1×** |
+| 1M   | 0.135 | 0.153 | **7.311** | **136**   | 7.59  | 7.82  | **54.2×** |
+| 1.5M | 0.138 | 0.146 | **9.808** | **101**   | 10.16 | 10.30 | **71.1×** |
+
+Source logs: `results-cloud-test3/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings
+
+1. **The W7 pattern is catastrophically slow at the new tier scale.**
+   At 1.5M nodes, throughput collapses to **~101 ops/s** vs Test 1's
+   ~5,000 — a **71× slowdown** despite operating on the same indexed
+   graph at the same uuid range.
+
+2. **Slowdown grows roughly linearly with graph size** (32× → 54× →
+   71×). This is the smoking gun: the regression is **NOT** a fixed
+   per-op overhead — it scales with the index/label-store size. This
+   is consistent with the original W7 customer report and with the
+   earlier 250K/500K reproducer numbers.
+
+3. **At 2M (earlier B6/B7 runs) the regression was gone** because that
+   bench used `random_props` (4 props) — `SET n = $props` was rewriting
+   only ~4 fields. With **50 props** rewritten unconditionally on every
+   op, the regression dominates again at every tier from 500K up.
+
+4. **Tight latency distribution within the slow regime.** p99/avg ≈
+   1.05× — every op is slow in the same way, not bursty. This points
+   to a deterministic per-op cost (full prop rewrite + label-store
+   update + index touches) rather than GC or contention.
+
+5. **No within-run drift** — each run is dead flat across 25 batches at
+   its bad steady-state number. The cost is paid every op.
+
+### What's expensive — likely culprits
+
+The query does, on every op (every op is a fresh uuid → CREATE branch):
+
+- 1× `MERGE :entity` index lookup (cheap, this is what Test 1 measures)
+- 1× node CREATE
+- 1× **`SET n = op.props` writing all 50 properties** (expensive at
+  scale because the prop store + composite index entry are touched for
+  each prop key)
+- 1× **`SET n:account` label-store write + label scan index update**
+- 1× **`REMOVE n:inactive` lookup-then-delete on label-store**
+  (no-op for fresh nodes but the engine still has to check)
+
+Per Test 2's data, the property writes alone are not the bottleneck
+(50 props on create cost 0.126 ms in Test 1). The remaining gap of
+**~3.9 ms / 7.2 ms / 9.7 ms** must come from the **unconditional label
+ops on every row plus the unconditional re-write of all 50 props on a
+just-created node** (which Cypher engines often can't fold).
+
+### Practical recommendation for customers
+
+Two things, in order of expected savings:
+
+1. **Stop writing what you don't need to.** Use `ON CREATE SET` /
+   `ON MATCH SET` to avoid rewriting the full prop bag on every op.
+   Test 2 demonstrates the audit-stamp pattern doing exactly this for
+   ~10% overhead instead of 30-70×.
+
+2. **Replace the `:inactive` / `:account` label swap with a boolean
+   property** (e.g. `active: true|false`) backed by a property index.
+   To be measured directly in Test 4 (re-init required because the
+   schema changes).
+
+### Reproduction
+
+```bash
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test3_${TAG}
+  python -u -m bench2.cli init --graph $GRAPH \
+    --shape add_new_node --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test3/${TAG}_init.log
+  python -u -m bench2.cli run --graph $GRAPH \
+    --workload upsert_w7 --name upsert_w7_${TAG} \
+    --start-id $SIZE --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test3/${TAG}_run.log
+done
+```
+

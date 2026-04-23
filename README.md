@@ -2,26 +2,29 @@
 
 A Python benchmark tool that measures **FalkorDB data population performance** across increasing graph sizes, with configurable batch sizes and multiple test variants.
 
-## 🔬 Latest finding — Test 1 vs Test 2: cost of two audit SETs after a MERGE (cloud, v4.18.01)
+## 🔬 Latest finding — W7 customer pattern is 32×–71× slower than `add_new_node` and **scales with graph size** (cloud, v4.18.01)
 
-*Same 50-prop CRM record, same composite uuid index, single client thread on AWS c4.xlarge → c6i.8xlarge cloud.
-**Test 1** = `MERGE (n:entity:account {uuid_hi, uuid_lo}) ON CREATE SET n = $props`.
-**Test 2** = Test 1 + `SET n.updated_at = $updated_at` + `SET n.version = coalesce(n.version, 0) + 1`.*
+*Same 50-prop CRM record, same composite uuid index, same 500K/1M/1.5M ladder, single client thread.
+**Test 1** = lean MERGE (`MERGE :entity:account` + `ON CREATE SET n = $props`).
+**Test 2** = T1 + 2 audit SETs.
+**Test 3** = customer W7 pattern (`MERGE :entity` + unconditional `SET n=$props` + `SET :account` + `REMOVE :inactive`).*
 
-| Tier | T1 ms/op | T2 ms/op | Δ per op | Δ % | T1 ops/s | T2 ops/s |
-|---:|---:|---:|---:|---:|---:|---:|
-| **500K** | 0.126 | **0.141** | +0.015 | **+12.2%** | 5,422 | 4,998 |
-| **1M**   | 0.135 | **0.153** | +0.018 | **+13.6%** | 5,162 | 4,708 |
-| **1.5M** | 0.138 | **0.146** | +0.008 | **+5.4%**  | 5,082 | 4,887 |
+| Tier | T1 ms/op | T2 ms/op | **T3 ms/op** | T3 ops/s | **T3 / T1** |
+|---:|---:|---:|---:|---:|---:|
+| **500K** | 0.126 | 0.141 | **4.045** | 244   | **32.1×** |
+| **1M**   | 0.135 | 0.153 | **7.311** | 136   | **54.2×** |
+| **1.5M** | 0.138 | 0.146 | **9.808** | 101   | **71.1×** |
 
 **Findings:**
 
-- **Two extra SETs cost ~0.015 ms / ~10–13%** per op. Small but measurable; the second SET is intentionally read-then-write (via `coalesce`) so this isn't a no-op write.
-- **Both tests scale sublinearly:** 500K→1.5M is +9.4% on Test 1, only +3.5% on Test 2 — extra fixed per-op work dilutes the already-small index-lookup growth.
-- **No within-run drift** in any of the 6 runs.
-- **Capacity numbers:** ~5,200 add-new-node ops/sec without audit, ~4,900 ops/sec with audit, single client, at 1M+ scale.
+- **The W7 upsert pattern collapses at scale.** At 1.5M nodes the same indexed graph drops from ~5,000 ops/sec (T1) to ~101 ops/sec (T3) on identical hardware.
+- **The regression scales linearly with graph size** (32× → 54× → 71×). This is the smoking gun — it's not a fixed per-op overhead, it's growing with the label/index store. Consistent with the original customer report and the earlier 250K/500K W7 reproducer.
+- **Earlier 2M re-runs saw NO regression** because they used a 4-prop record. With **50 props rewritten unconditionally on every op**, the regression dominates again.
+- p99/avg ≈ 1.05× — every op is slow in the same way, not bursty.
 
-Full results, methodology, per-batch drift: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+**Customer guidance:** stop unconditional rewrites (`ON CREATE SET` + `ON MATCH SET` for only what changed — see Test 2 for the audit pattern at ~10% overhead). Test 4 (next) will measure replacing the `:inactive` label swap with an `active: bool` indexed property.
+
+Full results, per-batch drift, hypothesised cost breakdown: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
 
 ---
 
