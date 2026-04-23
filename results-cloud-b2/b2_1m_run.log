@@ -1,0 +1,19 @@
+[run] pre: 1,050,000 nodes / 1,425,000 edges  (graph=bench2_b2_indexed_1m, workload=pair)
+[bench:merge_pair_indexed_1m] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:merge_pair_indexed_1m]   batch 1 (warmup) batch_total=94.5 ms per_op=0.095 ms
+[bench:merge_pair_indexed_1m]   batch 2 (warmup) batch_total=88.5 ms per_op=0.089 ms
+[bench:merge_pair_indexed_1m]   batch 3 (warmup) batch_total=90.2 ms per_op=0.090 ms
+[bench:merge_pair_indexed_1m]   batch 4 (warmup) batch_total=87.6 ms per_op=0.088 ms
+[bench:merge_pair_indexed_1m]   batch 5 (warmup) batch_total=86.8 ms per_op=0.087 ms
+[bench:merge_pair_indexed_1m]   batch 6 (warmup) batch_total=86.4 ms per_op=0.086 ms
+[bench:merge_pair_indexed_1m]   batch 7 (warmup) batch_total=87.6 ms per_op=0.088 ms
+[bench:merge_pair_indexed_1m]   batch 8 (warmup) batch_total=86.8 ms per_op=0.087 ms
+[bench:merge_pair_indexed_1m]   batch 9 (warmup) batch_total=87.1 ms per_op=0.087 ms
+[bench:merge_pair_indexed_1m]   batch 10 (warmup) batch_total=87.2 ms per_op=0.087 ms
+[bench:merge_pair_indexed_1m]   batch 11 (measured) batch_total=86.2 ms per_op=0.086 ms
+[bench:merge_pair_indexed_1m]   batch 12 (measured) batch_total=86.8 ms per_op=0.087 ms
+[bench:merge_pair_indexed_1m]   batch 13 (measured) batch_total=88.2 ms per_op=0.088 ms
+[bench:merge_pair_indexed_1m]   batch 15 avg(last5)=0.087 ms/op
+[bench:merge_pair_indexed_1m]   batch 20 avg(last5)=0.087 ms/op
+[bench:merge_pair_indexed_1m]   batch 25 avg(last5)=0.095 ms/op
+[run] merge_pair_indexed_1m: 9,317 ops/s  avg=0.0896 ms/op  p95=0.0889  p99=0.1254

@@ -37,6 +37,19 @@ UPSERT_LABEL_SWAP_QUERY = (
     "REMOVE n:inactive"
 )
 
+# B5 — FOREACH/CASE workaround for W7a. Same semantics as B3 but:
+#   * ON CREATE SET only fires on newly-created nodes (sets label, @type, props)
+#   * FOREACH+CASE branches only run if the row actually carries :inactive
+#     (i.e. the REMOVE only executes when there's something to remove)
+# This skips the redundant writes that B3 performs on every match.
+UPSERT_FOREACH_QUERY = (
+    "UNWIND $ops AS op "
+    "MERGE (n:entity {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
+    "  ON CREATE SET n:account, n.`@type` = 'account', n += op.props "
+    "FOREACH (_ IN CASE WHEN n:inactive THEN [1] ELSE [] END | "
+    "  REMOVE n:inactive SET n:account)"
+)
+
 
 def make_pair_op(a_id: int, b_id: int, rng: random.Random) -> dict:
     a_hi, a_lo = uuid_for_id(a_id)

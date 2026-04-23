@@ -32,8 +32,20 @@ def init_graph(
     indexed: bool = True,
     batch_size: int = 100,
     verbose: bool = True,
+    extra_contacts: int = 0,
 ) -> tuple[int, int]:
-    """Drop graph, optionally index, load baseline. Return (nodes, edges)."""
+    """Drop graph, optionally index, load baseline. Return (nodes, edges).
+
+    If `extra_contacts > 0`, also load that many `:entity:contact` nodes
+    into the same composite index. They share the outer `:entity` label
+    with the account nodes (so they live in the same `:entity(uuid_hi,
+    uuid_lo)` index) but carry the `:contact` inner label instead of
+    `:account`. No edges are created among contact nodes.
+
+    The contact uuid range starts at id `2 * (num_nodes // 2) + 1_000_000`
+    so it cannot collide with any account node or with the `--start-id`
+    typically used by the bench (1M / 2M).
+    """
 
     if verbose:
         print(f"[init] dropping graph '{client._graph_name}'")
@@ -84,5 +96,40 @@ def init_graph(
 
     nodes, edges = client.graph_size()
     if verbose:
-        print(f"[init] done — graph has {nodes:,} nodes / {edges:,} edges")
+        print(f"[init] done with accounts — graph has {nodes:,} nodes / {edges:,} edges", flush=True)
+
+    if extra_contacts > 0:
+        contact_start_id = 2 * num_init_pairs + 1_000_000
+        if verbose:
+            print(f"[init] loading {extra_contacts:,} :entity:contact nodes "
+                  f"(uuid range starts at id {contact_start_id:,})", flush=True)
+        contact_query = (
+            "UNWIND $ops AS op "
+            "MERGE (n:entity {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
+            "  ON CREATE SET n:contact, n.`@type` = 'contact', "
+            "                n += op.props, n.id = op.id"
+        )
+        from bench2.workload import iter_single_batches
+        c_batches_total = (extra_contacts + batch_size - 1) // batch_size
+        c_batches_done = 0
+        for ops in iter_single_batches(start_id=contact_start_id, num_ops=extra_contacts,
+                                       batch_size=batch_size, seed=2):
+            mapped = []
+            for op in ops:
+                mapped.append({
+                    "uuid_hi": op["uuid_hi"],
+                    "uuid_lo": op["uuid_lo"],
+                    "id": op["props"]["id"],
+                    "props": {k: v for k, v in op["props"].items() if k not in ("uuid_hi", "uuid_lo", "id")},
+                })
+            client.execute_query(contact_query, params={"ops": mapped})
+            c_batches_done += 1
+            if verbose and c_batches_done % 5 == 0:
+                print(f"[init]   contacts {c_batches_done}/{c_batches_total} batches "
+                      f"({c_batches_done * batch_size:,} nodes)", flush=True)
+        nodes, edges = client.graph_size()
+        if verbose:
+            print(f"[init] done — graph has {nodes:,} nodes / {edges:,} edges "
+                  f"(accounts + {extra_contacts:,} contacts)", flush=True)
+
     return nodes, edges

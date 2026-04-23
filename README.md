@@ -2,6 +2,30 @@
 
 A Python benchmark tool that measures **FalkorDB data population performance** across increasing graph sizes, with configurable batch sizes and multiple test variants.
 
+## 🚨 Latest finding — noisy-neighbor labels cost 20× at 1M (bench2, cloud)
+
+*Apples-to-apples, FalkorDB v4.18.01 standalone on AWS c6i.8xlarge:*
+
+| Graph | Composition | Total index entries | MERGE-pair avg | Throughput |
+|---|---|---:|---:|---:|
+| B2 1M (clean) | 1M `:entity:account` | 1.0M | **0.090 ms/op** | **9,317 ops/s** |
+| B4 1M (noisy) | 1M `:entity:account` + 500K `:entity:contact` *(same composite `:entity(uuid_hi, uuid_lo)` index)* | 1.5M (+50%) | **1.804 ms/op** | **549 ops/s** |
+| **Impact** | | | **20× slower** | **17× drop** |
+
+A **50% increase in index cardinality** via a different child label under the **same composite index** produces a **20× latency hit** on writes — wildly super-linear.
+
+**Immediate recommendation:** do **not** share a composite key index across multiple child labels. Partition it — use `:account(uuid_hi, uuid_lo)`, `:contact(uuid_hi, uuid_lo)`, etc. as separate indexes.
+
+See the full report with methodology, all legs (B1/B2/B3/B4), W7 customer pattern reproduction at 1M, and reproduction commands:
+[`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+
+---
+
+## Two benchmark suites in this repo
+
+- **`benchmark/`** — throughput sweep across node/edge/index variants at 10K → 1M scale. Documented below.
+- **`bench2/`** — focused latency studies on specific workload shapes (MERGE-pair, W7 upsert, noisy-neighbor labels). Reproduces real customer reports. See [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md).
+
 ## Test Types
 
 | Test | Nodes | UUID | UUID Index | Edges | Description |

@@ -34,6 +34,7 @@ explicitly noted otherwise.
 | Property         | Value                                                  |
 |------------------|--------------------------------------------------------|
 | Deployment       | **FalkorDB Cloud — standalone (single node, no replica)** |
+| FalkorDB version | **v4.18.01**                                           |
 | Host instance    | **AWS EC2 c6i.8xlarge** (32 vCPU, 64 GiB RAM)          |
 | Region           | us-east-2                                              |
 | Endpoint         | `r-ercqm6xbqm.instance-if8kk23ls.hc-2uaqqpjgg.us-east-2.aws.f2e0a955bb84.cloud:6379` |
