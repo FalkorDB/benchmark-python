@@ -76,6 +76,23 @@ ADD_NEW_NODE_WITH_AUDIT_QUERY = (
 )
 
 
+# Test 3 (upsert_w7) — the customer-reported W7 upsert pattern, run at
+# the Test 1/2 50-prop scale and tier ladder. Differences from Test 1:
+#   * MERGE matches on :entity ONLY; :account is added after via SET label
+#   * All 50 props are rewritten UNCONDITIONALLY via `SET n = op.props`
+#     (no ON CREATE/ON MATCH split)
+#   * `SET n:account` and `REMOVE n:inactive` are unconditional label ops
+# Op shape is identical to Test 1 (uuid_hi, uuid_lo, 50-prop bag), so we
+# reuse iter_add_new_node_batches.
+UPSERT_W7_QUERY = (
+    "UNWIND $ops AS op "
+    "MERGE (n:entity {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
+    "SET n = op.props "
+    "SET n:account "
+    "REMOVE n:inactive"
+)
+
+
 def make_pair_op(a_id: int, b_id: int, rng: random.Random) -> dict:
     a_hi, a_lo = uuid_for_id(a_id)
     b_hi, b_lo = uuid_for_id(b_id)

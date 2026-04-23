@@ -73,11 +73,14 @@ def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, 
 @click.option("--batch-size", default=100, show_default=True, type=int)
 @click.option("--warmup-batches", default=10, show_default=True, type=int)
 @click.option("--workload",
-              type=click.Choice(["pair", "upsert", "foreach", "add_new_node", "add_new_node_with_audit"]),
+              type=click.Choice(["pair", "upsert", "foreach", "add_new_node",
+                                 "add_new_node_with_audit", "upsert_w7"]),
               default="pair", show_default=True,
               help="pair = MERGE-pair; upsert = W7 slow query; foreach = W7 FOREACH workaround; "
                    "add_new_node = Test 1 single MERGE :entity:account with 50 props; "
-                   "add_new_node_with_audit = Test 2 same as add_new_node + updated_at/version SETs.")
+                   "add_new_node_with_audit = Test 2 same as add_new_node + updated_at/version SETs; "
+                   "upsert_w7 = Test 3 W7 customer pattern at 50-prop scale "
+                   "(MERGE :entity, SET props, SET :account, REMOVE :inactive).")
 def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops, batch_size, warmup_batches, workload) -> None:
     """Run the measured benchmark against an existing init graph."""
     client = _client(host, port, graph, username, password)
@@ -96,6 +99,9 @@ def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops,
     elif workload == "add_new_node_with_audit":
         from bench2.workload import ADD_NEW_NODE_WITH_AUDIT_QUERY, iter_add_new_node_with_audit_batches
         extra = {"query": ADD_NEW_NODE_WITH_AUDIT_QUERY, "iter_fn": iter_add_new_node_with_audit_batches}
+    elif workload == "upsert_w7":
+        from bench2.workload import UPSERT_W7_QUERY, iter_add_new_node_batches
+        extra = {"query": UPSERT_W7_QUERY, "iter_fn": iter_add_new_node_batches}
     r = run_benchmark(
         client, name=name, indexed=indexed, start_id=start_id,
         num_pairs=ops, batch_size=batch_size, warmup_batches=warmup_batches,
