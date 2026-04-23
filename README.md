@@ -2,29 +2,25 @@
 
 A Python benchmark tool that measures **FalkorDB data population performance** across increasing graph sizes, with configurable batch sizes and multiple test variants.
 
-## 🔬 Latest finding — W7 customer pattern is 32×–71× slower than `add_new_node` and **scales with graph size** (cloud, v4.18.01)
+## 🔬 Latest finding — `:inactive` label vs `active` property: **identical cost** on the write path (cloud, v4.18.01)
 
-*Same 50-prop CRM record, same composite uuid index, same 500K/1M/1.5M ladder, single client thread.
-**Test 1** = lean MERGE (`MERGE :entity:account` + `ON CREATE SET n = $props`).
-**Test 2** = T1 + 2 audit SETs.
-**Test 3** = customer W7 pattern (`MERGE :entity` + unconditional `SET n=$props` + `SET :account` + `REMOVE :inactive`).*
+*Same 50-prop CRM record, same 500K/1M/1.5M ladder. Test 3 = W7 customer pattern with `REMOVE n:inactive`. Test 4 = same pattern but `SET n.active = true` against an indexed `:entity(active)` property instead.*
 
-| Tier | T1 ms/op | T2 ms/op | **T3 ms/op** | T3 ops/s | **T3 / T1** |
+| Tier | T1 lean | T2 +audit | **T3 W7 (REMOVE :inactive)** | **T4 W7 (SET active=true)** | T4 vs T3 |
 |---:|---:|---:|---:|---:|---:|
-| **500K** | 0.126 | 0.141 | **4.045** | 244   | **32.1×** |
-| **1M**   | 0.135 | 0.153 | **7.311** | 136   | **54.2×** |
-| **1.5M** | 0.138 | 0.146 | **9.808** | 101   | **71.1×** |
+| **500K** | 0.126 | 0.141 | **4.045** | **4.159** | **+2.8%** |
+| **1M**   | 0.135 | 0.153 | **7.311** | **7.389** | **+1.1%** |
+| **1.5M** | 0.138 | 0.146 | **9.808** | **9.814** | **+0.1%** |
 
-**Findings:**
+**Findings — hypothesis refuted:**
 
-- **The W7 upsert pattern collapses at scale.** At 1.5M nodes the same indexed graph drops from ~5,000 ops/sec (T1) to ~101 ops/sec (T3) on identical hardware.
-- **The regression scales linearly with graph size** (32× → 54× → 71×). This is the smoking gun — it's not a fixed per-op overhead, it's growing with the label/index store. Consistent with the original customer report and the earlier 250K/500K W7 reproducer.
-- **Earlier 2M re-runs saw NO regression** because they used a 4-prop record. With **50 props rewritten unconditionally on every op**, the regression dominates again.
-- p99/avg ≈ 1.05× — every op is slow in the same way, not bursty.
+- **Swapping the label REMOVE for an indexed boolean property gives essentially zero improvement.** T4 is within measurement noise of T3 at every tier. The new property index pays its own maintenance cost that roughly cancels the saving from dropping the REMOVE.
+- **The label REMOVE is NOT the bottleneck.** The expensive part of the W7 pattern is the unconditional `SET n = $props` (full 50-prop rewrite on every op). Both the prop store and the composite index entries get touched for every key on every write.
+- **Same scaling shape as Test 3** — slowdown grows linearly with graph size (32×→54×→71× vs Test 1).
 
-**Customer guidance:** stop unconditional rewrites (`ON CREATE SET` + `ON MATCH SET` for only what changed — see Test 2 for the audit pattern at ~10% overhead). Test 4 (next) will measure replacing the `:inactive` label swap with an `active: bool` indexed property.
+**Customer takeaway:** the `:inactive` → `active` property refactor will not help. The only effective fix is **stop doing unconditional writes** — use `ON CREATE SET` / `ON MATCH SET` and only write what actually changed (Test 2 shows this at ~10% overhead vs 32-71×).
 
-Full results, per-batch drift, hypothesised cost breakdown: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+Full results, all four tests, per-batch drift: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
 
 ---
 

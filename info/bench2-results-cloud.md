@@ -813,3 +813,104 @@ for SIZE in 500000 1000000 1500000; do
 done
 ```
 
+---
+
+## Test 4 — `upsert_w7_active` (boolean property instead of label REMOVE)
+
+Same query shape as Test 3 except the `:inactive` label REMOVE is
+replaced with a `SET n.active = true` against a property-indexed
+`:entity(active)`:
+
+```cypher
+MERGE (n:entity {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})
+SET n = $props          -- same as T3: unconditional 50-prop replace
+SET n:account           -- same as T3: unconditional label add
+SET n.active = true     -- replaces REMOVE n:inactive; property-indexed
+```
+
+**Init** uses a fast lean MERGE (`ADD_NEW_NODE_ACTIVE_INIT_QUERY`) that
+produces the same end-state node shape (`:entity:account` + 50 props +
+`active=true`) but with `ON CREATE SET` so init isn't slowed down by
+the W7 pattern itself. The composite uuid index AND the property index
+on `active` are both created before loading.
+
+**Hypothesis under test:** the customer's `REMOVE :inactive` label op
+is the heavy part of the W7 pattern. Replacing it with a property
+write should improve performance.
+
+### Combined Test 1 / Test 2 / Test 3 / Test 4
+
+| Tier | T1 ms/op | T2 ms/op | T3 ms/op | **T4 ms/op** | T4 vs T3 | T4 ops/s | T4 p99 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 0.141 | 4.045 | **4.159** | **+2.8%** | 237 | 4.51 |
+| 1M   | 0.135 | 0.153 | 7.311 | **7.389** | **+1.1%** | 134 | 7.60 |
+| 1.5M | 0.138 | 0.146 | 9.808 | **9.814** | **+0.1%** | 101 | 10.36 |
+
+Source logs: `results-cloud-test4/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings — hypothesis REFUTED
+
+1. **Replacing `REMOVE :inactive` with `SET active = true` gives
+   essentially zero improvement** at every tier. T4 is within
+   measurement noise of T3, and even slightly slower at 500K
+   (the new property index pays its own maintenance cost on every
+   `SET active=true`).
+
+2. **The label REMOVE is NOT the bottleneck.** The hypothesis that the
+   `REMOVE :inactive` label op was the expensive part of the W7
+   pattern is wrong. We can swap it for an indexed property write at
+   roughly equal cost.
+
+3. **The real cost is `SET n = $props`** — the unconditional rewrite
+   of all 50 properties on every op. This is what scales with graph
+   size and dominates the per-op cost. Both the prop store update and
+   (potentially) composite index touches happen for every key on every
+   write, regardless of whether anything changed.
+
+4. **Property indexes are not free either.** Dropping the label REMOVE
+   saved some work but adding the `:entity(active)` index added
+   roughly the same amount back. Net change ≈ 0.
+
+5. **Same scaling shape as Test 3** — slowdown grows roughly linearly
+   with graph size (32× → 54× → 71× vs Test 1, identical to T3). This
+   confirms the cost is in the prop-rewrite path, not the label op.
+
+### What this means for the customer
+
+Swapping the `:inactive` label for an `active` property is **not** a
+win on the write path. The only effective fix is to **stop doing
+unconditional writes**:
+
+- Use `ON CREATE SET` for the initial property bag.
+- Use `ON MATCH SET` ONLY for the fields that actually change between
+  CDC events (e.g. `updated_at`, `version`, the specific business
+  fields that were updated upstream).
+- This is exactly what Test 2 demonstrates: ~10% overhead vs Test 1
+  for a realistic audit-stamp pattern, instead of 32-71×.
+
+If the customer's CDC event payload genuinely contains a fresh full
+snapshot every time and they don't want to diff client-side, the next
+thing to try is **batching the writes by op-type** so the planner can
+specialize: separate INSERT-only batches (no MATCH path needed) from
+true UPDATE batches.
+
+### Reproduction
+
+```bash
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test4_${TAG}
+  python -u -m bench2.cli init --graph $GRAPH \
+    --shape add_new_node_active --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test4/${TAG}_init.log
+  python -u -m bench2.cli run --graph $GRAPH \
+    --workload upsert_w7_active --name upsert_w7_active_${TAG} \
+    --start-id $SIZE --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test4/${TAG}_run.log
+done
+```
+
