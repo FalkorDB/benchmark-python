@@ -227,6 +227,14 @@ python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
 
 ## Open follow-ups
 
+> **Decision (2026-04-23):** B1 (no-index `merge_pair`) is **dropped from
+> future tier runs**. The 14× index speed-up is now established and
+> consistent across laptop (50K) and cloud (330K) — there is no realistic
+> production scenario where running without the composite uuid index is
+> acceptable, so further B1 measurements at larger tiers (500K+) would
+> burn cloud time without producing a new finding. Future tiers (1M, 1.5M)
+> measure **B2 + B3** (and B4 once added) only.
+
 - **B4 — FOREACH/CASE workaround** on the same graph as B3, to enable a
   direct repro of W7's 3.5× / 10× slow vs fast ratio.
 - **B3-mixed** — preload some `:inactive` nodes so the upsert path
