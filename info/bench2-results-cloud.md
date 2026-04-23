@@ -36,6 +36,7 @@ All three legs share the same node shape (`:entity:account` with
 | **B1** | `bench2_b1_no_index` (~330K nodes) | **No** | `merge_pair` | new pairs |
 | **B2** | `bench2_b2_indexed` (500K nodes) | Yes | `merge_pair` | new pairs |
 | **B3** | `bench2_b3_upsert`  (500K nodes) | Yes | `upsert_label_swap` (W7 slow) | new singles |
+| **B4** | `bench2_b4_noisy_1m` (1M `:entity:account` + 500K `:entity:contact`) | Yes | `merge_pair` (same as B2) | new pairs |
 
 ### Bench queries
 
@@ -97,10 +98,11 @@ workload-shape-equivalent rewrite of the customer's literal query.)
 |---|---:|---:|---:|---:|---:|---|
 | **B2** indexed `merge_pair`            | 1.05M → 1.10M | **0.090** | 0.089 | 0.125 | **9,317** | flat (0.087 → 0.095) |
 | **B3** indexed `upsert_label_swap` (W7) | 1.00M → 1.025M | **0.357** | 0.452 | 0.471 | **2,731** | **0.098 → 0.436 (4.5× growth)** |
+| **B4** indexed `merge_pair` **+ 500K `:entity:contact` noisy neighbors** | 1.50M → 1.55M | **1.804** | 2.083 | 2.095 | **549** | 1.45 → 1.97 (+36%) |
 
 (B1 not run at 1M tier — see decision in *Open follow-ups* below.)
 
-Source logs: `results-cloud-b2/{b2,b3}_1m_run.log`.
+Source logs: `results-cloud-b2/{b2,b3,b4}_1m_run.log`.
 
 (B1 logs only print every-5-batch averages, so per-op p50 column is
 stated as the centre of the steady-state window. Per-op p95/p99 come from
@@ -219,8 +221,62 @@ without it we cannot quantify what fraction of the slowdown is "the W7
 bug" vs "MERGE-with-SET is just a heavier shape than MERGE-with-ON-CREATE".
 
 
+### 7. Noisy-neighbor labels in a shared index cost 20x at 1M
 
-### 6. 500K cloud numbers are stable; 1M B3 is not
+B4 answers: "does it matter if the composite `:entity` index contains
+nodes with different child labels (e.g. `:account` plus `:contact`)?"
+The answer is unambiguous: **yes, massively.**
+
+Apples-to-apples at 1M tier, identical bench query (`merge_pair`, indexed):
+
+| Metric | B2 1M (clean) | B4 1M (+500K `:entity:contact`) | Impact |
+|---|---:|---:|---|
+| `:entity` nodes in index | 1.0M | 1.5M (**+50%**) | |
+| Per-op avg | 0.090 ms | **1.804 ms** | **20x slower** |
+| Throughput | 9,317 ops/s | **549 ops/s** | **17x drop** |
+| p99 | 0.125 ms | 2.095 ms | 17x |
+| In-run drift | flat | 1.45 -> 1.97 ms/op (+36%) | also degrading |
+
+A 50% increase in total index cardinality produced a **20x latency hit**.
+That is wildly non-linear — if the cost were `O(index size)` we would
+expect ~1.5x at most. The bench query's `MERGE` lookup is on `:entity`
+which is correct, and the lookup on a new uuid should be a pure miss
+regardless of whether the surrounding nodes are `:account` or `:contact`.
+
+Plausible root causes to investigate:
+
+1. **`ON CREATE SET` re-validates the index on every insert** and that
+   validation cost scales super-linearly with nodes that share the index
+   but have a different child label.
+2. **The planner is doing a linear label filter** inside the MERGE
+   pipeline that isn't index-accelerated for the
+   `:entity:account`-vs-`:entity:contact` discrimination.
+3. **Constraint/uniqueness checks** on the composite key scan all
+   `:entity` nodes instead of just the child-label slice.
+
+**Customer-facing implication:** if you have one graph schema that mixes
+multiple entity child-labels (accounts, contacts, leads, deals, …)
+under a shared `:entity(uuid_hi, uuid_lo)` composite index, the write
+throughput on any one label **degrades super-linearly** with the total
+entity count, not the per-label count. In practice that means a graph
+with 1M accounts + 500K contacts writes accounts **20x slower** than a
+graph with just 1M accounts.
+
+**Recommended mitigation pending root-cause fix:**
+
+- **Partition the composite index by child label** — replace
+  `:entity(uuid_hi, uuid_lo)` with separate
+  `:account(uuid_hi, uuid_lo)` and `:contact(uuid_hi, uuid_lo)` indexes.
+- If the `:entity` parent label is needed for query paths, add it but
+  don't carry the composite key on the parent.
+
+**Open question:** we tested this at 1M/500K only. The degradation
+curve between 0 and 500K extra contacts is unknown — is there a small
+amount of mixing that is safe, or does any cross-label pollution cost
+proportionally? Worth a follow-up run with a 100K-step sweep.
+
+
+### 8. 500K cloud numbers are stable; 1M B3 is not
 
 **500K (all three legs):**
 
@@ -312,6 +368,17 @@ python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
   --graph bench2_b3_upsert_1m --name merge_upsert_label_swap_1m --workload upsert \
   --start-id 1000000 --ops 25000 --batch-size 1000 --warmup-batches 10 \
   2>&1 | tee results-cloud-b2/b3_1m_run.log
+
+# B4 — 1M tier with noisy-neighbor contacts (+500K :entity:contact)
+python -u -m bench2.cli init --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+  --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+  --graph bench2_b4_noisy_1m --nodes 1000000 --extra-contacts 500000 --batch-size 1000 \
+  2>&1 | tee results-cloud-b2/b4_1m_init.log
+python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+  --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+  --graph bench2_b4_noisy_1m --name merge_pair_indexed_1m_noisy \
+  --start-id 1000000 --ops 25000 --batch-size 1000 --warmup-batches 10 \
+  2>&1 | tee results-cloud-b2/b4_1m_run.log
 ```
 
 ## Open follow-ups
@@ -326,12 +393,23 @@ python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
 
 - **B4 — FOREACH/CASE workaround** on the same graph as B3, to enable a
   direct repro of W7's 3.5× / 10× slow vs fast ratio. **Now mandatory**
-  given the 1M B3 degradation finding (Insight 5).
+  given the 1M B3 degradation finding (Insight 5). *(Note: the current
+  B4 leg is the noisy-neighbor test — the FOREACH workaround is a
+  distinct follow-up, tentatively B5.)*
+- **B5 — FOREACH/CASE W7 workaround** on `bench2_b3_upsert_1m` to
+  measure the slow-vs-fast ratio the customer reported.
 - **B3-mixed** — preload some `:inactive` nodes so the upsert path
   actually exercises `SET n = props` updates and `REMOVE n:inactive`
   label deletions, rather than always taking the create branch.
-- **Larger tier (1.5M nodes)** for B2/B3 to confirm whether B3's
-  degradation continues linearly or accelerates between 1M and 1.5M.
+- **Larger tier (1.5M pure accounts)** to separate "graph just got bigger"
+  from the B4 "mixed-label" signal: does 1.5M `:entity:account` alone
+  cost 20× or is it specifically the label diversity?
+- **Noisy-neighbor sweep** — repeat B4 with 100K, 200K, 300K, 400K, 500K
+  extra contacts to characterise the degradation curve (linear? cliff?).
+- **Partitioned-index control** — rebuild with `:account(uuid_hi, uuid_lo)`
+  and `:contact(uuid_hi, uuid_lo)` as separate indexes (no shared
+  `:entity` index) and re-measure: this would confirm whether the
+  mitigation we are recommending actually restores B2-level throughput.
 - **Re-run B3 1M with longer ops** (e.g. 100K) to confirm whether the
   degradation continues to grow or plateaus past +25K rows.
 
