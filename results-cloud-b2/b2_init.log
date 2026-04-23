@@ -1,0 +1,11 @@
+[init] dropping graph 'bench2_b2_indexed'
+[init] creating composite index :entity(uuid_hi, uuid_lo)
+[init] loading 250,000 MERGE-pairs (500,000 nodes, 250,000 edges)
+[init]   50,000 pairs loaded
+[init]   100,000 pairs loaded
+[init]   150,000 pairs loaded
+[init]   200,000 pairs loaded
+[init]   250,000 pairs loaded
+[init] adding hub/star edges between existing nodes
+[init] done — graph has 500,000 nodes / 700,000 edges
+OK — 500,000 nodes / 700,000 edges (indexed=True)

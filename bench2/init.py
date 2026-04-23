@@ -53,11 +53,11 @@ def init_graph(
     for ops in iter_batches(start_id=0, num_pairs=num_init_pairs, batch_size=batch_size, seed=1):
         client.execute_query(QUERY, params={"ops": ops})
         batches_done += 1
-        if verbose and batches_done % 50 == 0:
-            print(f"[init]   {batches_done * batch_size:,} pairs loaded")
+        if verbose and batches_done % 5 == 0:
+            print(f"[init]   {batches_done * batch_size:,} pairs loaded", flush=True)
 
     if verbose:
-        print(f"[init] adding hub/star edges between existing nodes")
+        print(f"[init] adding hub/star edges between existing nodes", flush=True)
 
     extra_edges = list(hub_star_pairs(num_nodes))
     edge_query = (
@@ -67,6 +67,8 @@ def init_graph(
         "CREATE (a)-[:CONNECTED_TO]->(b)"
     )
     eb_size = 500
+    edge_batches_total = (len(extra_edges) + eb_size - 1) // eb_size
+    edge_batches_done = 0
     for i in range(0, len(extra_edges), eb_size):
         chunk = extra_edges[i:i + eb_size]
         ops = []
@@ -75,6 +77,10 @@ def init_graph(
             b_hi, b_lo = uuid_for_id(spoke)
             ops.append({"a_hi": a_hi, "a_lo": a_lo, "b_hi": b_hi, "b_lo": b_lo})
         client.execute_query(edge_query, params={"ops": ops})
+        edge_batches_done += 1
+        if verbose and edge_batches_done % 5 == 0:
+            print(f"[init]   hub/star {edge_batches_done}/{edge_batches_total} batches "
+                  f"({edge_batches_done * eb_size:,} edges)", flush=True)
 
     nodes, edges = client.graph_size()
     if verbose:

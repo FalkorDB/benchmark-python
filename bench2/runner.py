@@ -88,6 +88,12 @@ def run_benchmark(
 
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
+        if verbose and (is_warmup or (idx + 1) <= warmup_batches + 3):
+            phase = "warmup" if is_warmup else "measured"
+            print(f"[bench:{name}]   batch {idx + 1} ({phase}) batch_total={elapsed_ms:.1f} ms "
+                  f"per_op={elapsed_ms / max(1, len(ops)):.3f} ms",
+                  flush=True)
+
         if is_warmup:
             continue
         if ok:
@@ -96,8 +102,10 @@ def run_benchmark(
         else:
             errors += 1
 
-        if verbose and (idx + 1) % 50 == 0:
-            print(f"[bench:{name}]   batch {idx + 1} avg={sum(measured_ms[-50:]) / max(1, len(measured_ms[-50:])):.3f} ms/op")
+        if verbose and (idx + 1) % 5 == 0:
+            window = measured_ms[-5:]
+            print(f"[bench:{name}]   batch {idx + 1} avg(last5)={sum(window) / max(1, len(window)):.3f} ms/op",
+                  flush=True)
 
     total_s = (time.perf_counter() - t0_meas) if t0_meas else 0.0
     measured_sorted = sorted(measured_ms)
