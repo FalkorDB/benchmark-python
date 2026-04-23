@@ -59,9 +59,9 @@ def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, 
               help="Number of pairs (each pair = 2 nodes + 1 edge).")
 @click.option("--batch-size", default=100, show_default=True, type=int)
 @click.option("--warmup-batches", default=10, show_default=True, type=int)
-@click.option("--workload", type=click.Choice(["pair", "upsert"]), default="pair",
+@click.option("--workload", type=click.Choice(["pair", "upsert", "foreach"]), default="pair",
               show_default=True,
-              help="pair = B1/B2 MERGE-pair query; upsert = B3 customer W7 single-MERGE+SET=+label-swap")
+              help="pair = B1/B2/B4 MERGE-pair; upsert = B3 W7 slow query; foreach = B5 W7 FOREACH workaround")
 def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops, batch_size, warmup_batches, workload) -> None:
     """Run the measured benchmark against an existing init graph."""
     client = _client(host, port, graph, username, password)
@@ -71,6 +71,9 @@ def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops,
     if workload == "upsert":
         from bench2.workload import UPSERT_LABEL_SWAP_QUERY, iter_single_batches
         extra = {"query": UPSERT_LABEL_SWAP_QUERY, "iter_fn": iter_single_batches}
+    elif workload == "foreach":
+        from bench2.workload import UPSERT_FOREACH_QUERY, iter_single_batches
+        extra = {"query": UPSERT_FOREACH_QUERY, "iter_fn": iter_single_batches}
     r = run_benchmark(
         client, name=name, indexed=indexed, start_id=start_id,
         num_pairs=ops, batch_size=batch_size, warmup_batches=warmup_batches,
