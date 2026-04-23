@@ -1,0 +1,19 @@
+[run] pre: 1,000,000 nodes / 1,400,000 edges  (graph=bench2_b3_upsert_1m, workload=upsert)
+[bench:merge_upsert_label_swap_1m] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:merge_upsert_label_swap_1m]   batch 1 (warmup) batch_total=97.6 ms per_op=0.098 ms
+[bench:merge_upsert_label_swap_1m]   batch 2 (warmup) batch_total=104.1 ms per_op=0.104 ms
+[bench:merge_upsert_label_swap_1m]   batch 3 (warmup) batch_total=116.4 ms per_op=0.116 ms
+[bench:merge_upsert_label_swap_1m]   batch 4 (warmup) batch_total=132.9 ms per_op=0.133 ms
+[bench:merge_upsert_label_swap_1m]   batch 5 (warmup) batch_total=148.9 ms per_op=0.149 ms
+[bench:merge_upsert_label_swap_1m]   batch 6 (warmup) batch_total=163.7 ms per_op=0.164 ms
+[bench:merge_upsert_label_swap_1m]   batch 7 (warmup) batch_total=178.9 ms per_op=0.179 ms
+[bench:merge_upsert_label_swap_1m]   batch 8 (warmup) batch_total=195.6 ms per_op=0.196 ms
+[bench:merge_upsert_label_swap_1m]   batch 9 (warmup) batch_total=212.1 ms per_op=0.212 ms
+[bench:merge_upsert_label_swap_1m]   batch 10 (warmup) batch_total=229.5 ms per_op=0.230 ms
+[bench:merge_upsert_label_swap_1m]   batch 11 (measured) batch_total=244.2 ms per_op=0.244 ms
+[bench:merge_upsert_label_swap_1m]   batch 12 (measured) batch_total=258.6 ms per_op=0.259 ms
+[bench:merge_upsert_label_swap_1m]   batch 13 (measured) batch_total=278.0 ms per_op=0.278 ms
+[bench:merge_upsert_label_swap_1m]   batch 15 avg(last5)=0.276 ms/op
+[bench:merge_upsert_label_swap_1m]   batch 20 avg(last5)=0.360 ms/op
+[bench:merge_upsert_label_swap_1m]   batch 25 avg(last5)=0.436 ms/op
+[run] merge_upsert_label_swap_1m: 2,731 ops/s  avg=0.3573 ms/op  p95=0.4516  p99=0.4710
