@@ -119,6 +119,44 @@ UPSERT_W7_ACTIVE_QUERY = (
 )
 
 
+# Test 5 (delete_by_uuid) — single-node delete via composite uuid index.
+# Pure index lookup + node delete, no edges (init shape has none, so plain
+# DELETE suffices — no DETACH needed). Op shape is just the uuid pair.
+DELETE_BY_UUID_QUERY = (
+    "UNWIND $ops AS op "
+    "MATCH (n:entity {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
+    "DELETE n"
+)
+
+
+def make_delete_op(n_id: int) -> dict:
+    """Op for Test 5: just the composite uuid identifying the node to delete."""
+    hi, lo = uuid_for_id(n_id)
+    return {"uuid_hi": hi, "uuid_lo": lo}
+
+
+def iter_delete_batches(
+    start_id: int,
+    num_ops: int,
+    batch_size: int,
+    seed: int = 42,
+) -> Iterator[list[dict]]:
+    """Yield batches of single-node delete ops (Test 5).
+
+    seed is accepted for signature parity with the other iter_*_batches
+    functions but unused — delete ops are deterministic from start_id.
+    """
+    del seed
+    ops: list[dict] = []
+    for k in range(num_ops):
+        ops.append(make_delete_op(start_id + k))
+        if len(ops) >= batch_size:
+            yield ops
+            ops = []
+    if ops:
+        yield ops
+
+
 def make_pair_op(a_id: int, b_id: int, rng: random.Random) -> dict:
     a_hi, a_lo = uuid_for_id(a_id)
     b_hi, b_lo = uuid_for_id(b_id)

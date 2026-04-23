@@ -79,7 +79,8 @@ def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, 
 @click.option("--warmup-batches", default=10, show_default=True, type=int)
 @click.option("--workload",
               type=click.Choice(["pair", "upsert", "foreach", "add_new_node",
-                                 "add_new_node_with_audit", "upsert_w7", "upsert_w7_active"]),
+                                 "add_new_node_with_audit", "upsert_w7", "upsert_w7_active",
+                                 "delete_by_uuid"]),
               default="pair", show_default=True,
               help="pair = MERGE-pair; upsert = W7 slow query; foreach = W7 FOREACH workaround; "
                    "add_new_node = Test 1 single MERGE :entity:account with 50 props; "
@@ -87,7 +88,8 @@ def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, 
                    "upsert_w7 = Test 3 W7 customer pattern at 50-prop scale "
                    "(MERGE :entity, SET props, SET :account, REMOVE :inactive); "
                    "upsert_w7_active = Test 4 same as upsert_w7 but uses SET n.active=true "
-                   "instead of REMOVE n:inactive.")
+                   "instead of REMOVE n:inactive; "
+                   "delete_by_uuid = Test 5 MATCH-by-uuid + DELETE single node.")
 def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops, batch_size, warmup_batches, workload) -> None:
     """Run the measured benchmark against an existing init graph."""
     client = _client(host, port, graph, username, password)
@@ -112,6 +114,9 @@ def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops,
     elif workload == "upsert_w7_active":
         from bench2.workload import UPSERT_W7_ACTIVE_QUERY, iter_add_new_node_batches
         extra = {"query": UPSERT_W7_ACTIVE_QUERY, "iter_fn": iter_add_new_node_batches}
+    elif workload == "delete_by_uuid":
+        from bench2.workload import DELETE_BY_UUID_QUERY, iter_delete_batches
+        extra = {"query": DELETE_BY_UUID_QUERY, "iter_fn": iter_delete_batches}
     r = run_benchmark(
         client, name=name, indexed=indexed, start_id=start_id,
         num_pairs=ops, batch_size=batch_size, warmup_batches=warmup_batches,
