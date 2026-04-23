@@ -104,6 +104,32 @@ workload-shape-equivalent rewrite of the customer's literal query.)
 
 Source logs: `results-cloud-b2/{b2,b3,b4}_1m_run.log`.
 
+### 2M tier — clean vs noisy controlled comparison
+
+Two graphs at the **same total size (2M nodes)** and same composite index,
+differing only in label mix. Each graph runs the same 3 workloads
+(`pair` / `upsert` / `foreach`) sequentially. Bench query and parameters
+are identical between graphs.
+
+| Graph | Composition | Total | Hub/star edges |
+|---|---|---:|---:|
+| B6 clean 2M | 2.0M `:entity:account` | 2.0M | 2.8M |
+| B7 noisy 2M | 1.5M `:entity:account` + 0.5M `:entity:contact` | 2.0M | 2.1M |
+
+**Headline:**
+
+| Workload | B6 clean | B7 noisy | Diff | p99 (B6 / B7) |
+|---|---:|---:|---:|---:|
+| `pair` (B2-shape, 2 nodes/op) | **1.200 ms/op** (821 ops/s) | **1.197 ms/op** (824 ops/s) | **+0.3%** | 1.50 / 1.46 ms |
+| `upsert` (B3 W7 slow, 1 node/op) | **0.858 ms/op** (1,154 ops/s) | **0.855 ms/op** (1,158 ops/s) | **+0.3%** | 0.95 / 0.92 ms |
+| `foreach` (B5 W7 workaround, 1 node/op) | **0.975 ms/op** (1,017 ops/s) | **0.974 ms/op** (1,018 ops/s) | **+0.1%** | 1.13 / 1.13 ms |
+
+**B6 ≈ B7 across every workload, every batch, every percentile.** Label
+mixing has **no measurable cost** at this scale. (See Insight 8 — this
+overturns the B4 1M conclusion.)
+
+Source logs: `results-cloud-b2/{b6,b7}_2m_{pair,upsert,foreach}_run.log`.
+
 (B1 logs only print every-5-batch averages, so per-op p50 column is
 stated as the centre of the steady-state window. Per-op p95/p99 come from
 the runner headline.)
@@ -221,7 +247,13 @@ without it we cannot quantify what fraction of the slowdown is "the W7
 bug" vs "MERGE-with-SET is just a heavier shape than MERGE-with-ON-CREATE".
 
 
-### 7. Noisy-neighbor labels in a shared index cost 20x at 1M
+### 7. ~~Noisy-neighbor labels in a shared index cost 20x at 1M~~ (RETRACTED)
+
+> ⚠️ **This finding has been RETRACTED.** A controlled comparison at 2M
+> total nodes (B6 vs B7, see Insight 8) shows that label mixing has no
+> measurable cost. The B4 1M result was almost certainly an environmental
+> artifact. The original write-up is preserved below for the record.
+
 
 B4 answers: "does it matter if the composite `:entity` index contains
 nodes with different child labels (e.g. `:account` plus `:contact`)?"
@@ -276,7 +308,69 @@ amount of mixing that is safe, or does any cross-label pollution cost
 proportionally? Worth a follow-up run with a 100K-step sweep.
 
 
-### 8. 500K cloud numbers are stable; 1M B3 is not
+### 8. ⚠️ Retraction: B4's 20× noisy-neighbor finding does NOT replicate at 2M
+
+The 2M controlled comparison (Insight 7's evidence base) **rejects** the
+B4 hypothesis. At 2M total index size:
+
+| | B6 clean (2M `:entity:account`) | B7 noisy (1.5M `:entity:account` + 0.5M `:entity:contact`) | Diff |
+|---|---:|---:|---:|
+| `pair` ms/op | 1.200 | 1.197 | **+0.3%** |
+| `upsert` ms/op | 0.858 | 0.855 | **+0.3%** |
+| `foreach` ms/op | 0.975 | 0.974 | **+0.1%** |
+
+These are the same workload shape, the same total index size, with the
+**only** difference being label mix. They are **statistically identical
+on every metric** — within driver/network noise.
+
+So what produced B4's 20× hit (1.804 ms/op vs 0.090 ms/op for B2 1M)?
+Most likely **environmental**:
+
+- Cloud-server contention with another tenant during the B4 run window
+- Cache state difference (B4 graph was built with a separate init that
+  may have left the index in a degenerate state at the time)
+- Storage/IO transient
+
+The B4 1M graph still exists and we will re-run it (see Open follow-ups).
+If the re-run shows ~0.09 ms/op (matching B2 1M) → confirmed environmental.
+If it again shows ~1.80 ms/op → there is something specifically wrong
+with that graph's state, but **not** caused by label mixing per se.
+
+**Updated customer-facing guidance:** the recommendation to "partition
+composite indexes by child label" is **withdrawn** until we have a
+reproducible failure case. Sharing a `:entity(uuid_hi, uuid_lo)` index
+across multiple child labels is, on the evidence we now have, fine.
+
+### 9. ⚠️ The W7 FOREACH workaround is NOT faster than the slow query at 2M
+
+The customer's report claimed FOREACH/CASE rewriting of the W7 upsert
+gave a 3.5–10× speed-up. Our measurement at 2M says otherwise:
+
+| Query | B6 clean ms/op | B7 noisy ms/op |
+|---|---:|---:|
+| `upsert` (W7 "slow" shape) | 0.858 | 0.855 |
+| `foreach` (W7 "fast" workaround) | **0.975** (12% slower) | **0.974** (14% slower) |
+
+The "workaround" is in fact slightly **slower** than the "slow" query.
+This is consistent across both graphs and stable across batches (no
+drift inversion mid-run).
+
+Plausible explanations:
+
+1. **The W7 regression has been fixed in v4.18.01** — our build is
+   newer than the customer's. The slow-shape query is no longer
+   pathological, so the workaround has nothing to rewrite around.
+2. **The customer's slowdown was state-dependent** — our test always
+   takes the create branch (every uuid is new); the customer's
+   production traffic is presumably mostly updates, where redundant
+   `SET n = props` on a match has different cost characteristics.
+
+**Action:** add a B3-mixed leg (preload `:inactive` nodes so updates
+exercise the match branch) before drawing a final conclusion on the W7
+pattern. With only insert traffic measured, we cannot confirm the
+customer's regression is fixed — only that we cannot reproduce it.
+
+### 10. 500K cloud numbers are stable; 1M B3 is not
 
 **500K (all three legs):**
 
@@ -379,6 +473,31 @@ python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
   --graph bench2_b4_noisy_1m --name merge_pair_indexed_1m_noisy \
   --start-id 1000000 --ops 25000 --batch-size 1000 --warmup-batches 10 \
   2>&1 | tee results-cloud-b2/b4_1m_run.log
+
+# B6 — clean 2M (control)
+python -u -m bench2.cli init --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+  --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+  --graph bench2_b6_clean_2m --nodes 2000000 --batch-size 1000 \
+  2>&1 | tee results-cloud-b2/b6_2m_init.log
+
+# B7 — noisy 2M (1.5M accounts + 0.5M contacts, same index)
+python -u -m bench2.cli init --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+  --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+  --graph bench2_b7_noisy_2m --nodes 1500000 --extra-contacts 500000 --batch-size 1000 \
+  2>&1 | tee results-cloud-b2/b7_2m_init.log
+
+# Run B2/B3/B5 (pair/upsert/foreach) on each graph:
+for GRAPH in bench2_b6_clean_2m bench2_b7_noisy_2m; do
+  TAG=$( [[ $GRAPH == *clean* ]] && echo b6 || echo b7 )
+  for W in pair upsert foreach; do
+    case $W in pair) SID=4000000;; upsert) SID=4050000;; foreach) SID=4075000;; esac
+    python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+      --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+      --graph $GRAPH --name ${W}_${TAG}_2m --workload $W \
+      --start-id $SID --ops 25000 --batch-size 1000 --warmup-batches 10 \
+      2>&1 | tee results-cloud-b2/${TAG}_2m_${W}_run.log
+  done
+done
 ```
 
 ## Open follow-ups
@@ -391,13 +510,12 @@ python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
 > burn cloud time without producing a new finding. Future tiers (1M, 1.5M)
 > measure **B2 + B3** (and B4 once added) only.
 
-- **B4 — FOREACH/CASE workaround** on the same graph as B3, to enable a
-  direct repro of W7's 3.5× / 10× slow vs fast ratio. **Now mandatory**
-  given the 1M B3 degradation finding (Insight 5). *(Note: the current
-  B4 leg is the noisy-neighbor test — the FOREACH workaround is a
-  distinct follow-up, tentatively B5.)*
-- **B5 — FOREACH/CASE W7 workaround** on `bench2_b3_upsert_1m` to
-  measure the slow-vs-fast ratio the customer reported.
+- **B4 1M re-run** to confirm whether the 20× regression is
+  reproducible or environmental (Insight 8). **Top priority** — the
+  recommendation to partition composite indexes hinges on this.
+- **B5 FOREACH on `bench2_b3_upsert_1m`** for completeness (we have B5
+  at 2M only; 1M data point would let us see if the FOREACH-vs-upsert
+  ratio scales with size).
 - **B3-mixed** — preload some `:inactive` nodes so the upsert path
   actually exercises `SET n = props` updates and `REMOVE n:inactive`
   label deletions, rather than always taking the create branch.

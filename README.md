@@ -2,22 +2,33 @@
 
 A Python benchmark tool that measures **FalkorDB data population performance** across increasing graph sizes, with configurable batch sizes and multiple test variants.
 
-## 🚨 Latest finding — noisy-neighbor labels cost 20× at 1M (bench2, cloud)
+## 🔬 Latest finding — write latency at 2M, controlled clean-vs-noisy comparison (bench2, cloud)
 
-*Apples-to-apples, FalkorDB v4.18.01 standalone on AWS c6i.8xlarge:*
+*Apples-to-apples, FalkorDB v4.18.01 standalone on AWS c6i.8xlarge.
+Both graphs at the **same total size (2M)** under the **same composite
+`:entity(uuid_hi, uuid_lo)` index** — only label mix differs.*
 
-| Graph | Composition | Total index entries | MERGE-pair avg | Throughput |
+| Graph | Composition | `pair` ms/op | `upsert` ms/op | `foreach` ms/op |
 |---|---|---:|---:|---:|
-| B2 1M (clean) | 1M `:entity:account` | 1.0M | **0.090 ms/op** | **9,317 ops/s** |
-| B4 1M (noisy) | 1M `:entity:account` + 500K `:entity:contact` *(same composite `:entity(uuid_hi, uuid_lo)` index)* | 1.5M (+50%) | **1.804 ms/op** | **549 ops/s** |
-| **Impact** | | | **20× slower** | **17× drop** |
+| **B6 clean 2M** | 2.0M `:entity:account` | 1.200 | 0.858 | 0.975 |
+| **B7 noisy 2M** | 1.5M `:entity:account` + 0.5M `:entity:contact` | 1.197 | 0.855 | 0.974 |
+| **Difference** | | **+0.3%** | **+0.3%** | **+0.1%** |
 
-A **50% increase in index cardinality** via a different child label under the **same composite index** produces a **20× latency hit** on writes — wildly super-linear.
+**Two findings worth highlighting:**
 
-**Immediate recommendation:** do **not** share a composite key index across multiple child labels. Partition it — use `:account(uuid_hi, uuid_lo)`, `:contact(uuid_hi, uuid_lo)`, etc. as separate indexes.
+1. **Sharing a composite index across multiple child labels has no
+   measurable cost.** Within-noise on every workload, every percentile,
+   batch by batch. *(This overturns an earlier, weaker B4 1M result —
+   see [the report's Insight 8 retraction](./info/bench2-results-cloud.md).)*
 
-See the full report with methodology, all legs (B1/B2/B3/B4), W7 customer pattern reproduction at 1M, and reproduction commands:
-[`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+2. **The customer-reported W7 "FOREACH workaround" is NOT faster than
+   the slow query at 2M.** `foreach` is 12-14% **slower** than `upsert`
+   in both graphs. Either the W7 regression has been fixed in v4.18.01,
+   or it requires update-traffic conditions our pure-insert bench
+   doesn't exercise.
+
+Full methodology, all six legs (B1–B7), per-batch drift analysis,
+reproduction commands: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
 
 ---
 

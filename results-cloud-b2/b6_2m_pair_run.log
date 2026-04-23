@@ -1,0 +1,19 @@
+[run] pre: 2,000,000 nodes / 2,800,000 edges  (graph=bench2_b6_clean_2m, workload=pair)
+[bench:pair_b6_2m] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:pair_b6_2m]   batch 1 (warmup) batch_total=190.8 ms per_op=0.191 ms
+[bench:pair_b6_2m]   batch 2 (warmup) batch_total=249.2 ms per_op=0.249 ms
+[bench:pair_b6_2m]   batch 3 (warmup) batch_total=313.1 ms per_op=0.313 ms
+[bench:pair_b6_2m]   batch 4 (warmup) batch_total=372.1 ms per_op=0.372 ms
+[bench:pair_b6_2m]   batch 5 (warmup) batch_total=439.3 ms per_op=0.439 ms
+[bench:pair_b6_2m]   batch 6 (warmup) batch_total=501.8 ms per_op=0.502 ms
+[bench:pair_b6_2m]   batch 7 (warmup) batch_total=565.0 ms per_op=0.565 ms
+[bench:pair_b6_2m]   batch 8 (warmup) batch_total=652.2 ms per_op=0.652 ms
+[bench:pair_b6_2m]   batch 9 (warmup) batch_total=692.1 ms per_op=0.692 ms
+[bench:pair_b6_2m]   batch 10 (warmup) batch_total=760.1 ms per_op=0.760 ms
+[bench:pair_b6_2m]   batch 11 (measured) batch_total=824.6 ms per_op=0.825 ms
+[bench:pair_b6_2m]   batch 12 (measured) batch_total=889.3 ms per_op=0.889 ms
+[bench:pair_b6_2m]   batch 13 (measured) batch_total=950.2 ms per_op=0.950 ms
+[bench:pair_b6_2m]   batch 15 avg(last5)=0.951 ms/op
+[bench:pair_b6_2m]   batch 20 avg(last5)=1.267 ms/op
+[bench:pair_b6_2m]   batch 25 avg(last5)=1.382 ms/op
+[run] pair_b6_2m: 821 ops/s  avg=1.2001 ms/op  p95=1.4421  p99=1.5025
