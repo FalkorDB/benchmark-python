@@ -1,7 +1,7 @@
 # FalkorDB CRM Benchmark — Detailed Results & Workload Reference
 
 **Run:** `results-cloud/workloads_20260422_005515.csv` (10 workloads × 2 tiers = 20 rows)
-**Target:** FalkorDB Cloud — **standalone** on AWS EC2 **c6i.8xlarge** (32 vCPU / 64 GiB), us-east-2
+**Target:** FalkorDB Cloud (v4.18.01) — **standalone** on AWS EC2 **c6i.8xlarge** (32 vCPU / 64 GiB), us-east-2
 **Client:** AWS EC2 **c4.xlarge** (4 vCPU / 7.5 GiB), us-east-2 — single client, serial batches
 **Driver script:** `scripts/full_run.sh` — single idempotent init then `suite --skip-init`
 **Per-workload params:** `ops=25,000`, `batch_size=1,000` → 25 batches per row

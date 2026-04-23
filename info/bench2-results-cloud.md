@@ -16,6 +16,7 @@ Identical to the W1–W7 cloud suite:
 | | |
 |--|--|
 | **FalkorDB deployment** | Cloud, **standalone** (single node, no replica) |
+| **FalkorDB version**    | **v4.18.01**                                     |
 | **Server host**         | AWS EC2 **c6i.8xlarge** (32 vCPU, 64 GiB RAM), us-east-2 |
 | **Client host**         | AWS EC2 **c4.xlarge** (4 vCPU, 7.5 GiB RAM), us-east-2 |
 | **Network**             | Same region, public endpoint, TLS off |
