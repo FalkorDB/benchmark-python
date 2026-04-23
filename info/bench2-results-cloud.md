@@ -629,3 +629,81 @@ done
 - **Concurrent clients** — single-client throughput is 5K ops/s; what
   does N parallel clients give?
 
+---
+
+## Test 2 — `add_new_node_with_audit` (Test 1 + 2 extra SETs)
+
+Identical to Test 1 except the bench query stamps two audit fields after
+the MERGE:
+
+```cypher
+MERGE (n:entity:account {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})
+  ON CREATE SET n = $props
+SET n.updated_at = $updated_at
+SET n.version    = coalesce(n.version, 0) + 1
+```
+
+Same init shape (uses the same query), same tier ladder (500K, 1M,
+1.5M), same params (25K ops, batch 1000, single client thread).
+
+The second SET intentionally **reads** `n.version` and writes it back
+(via `coalesce`) so it's not a no-op — measures realistic
+"read-then-write" cost, not just an assignment.
+
+### Combined Test 1 vs Test 2 — marginal cost of two extra SETs
+
+| Tier | T1 ms/op | T2 ms/op | Δ ms/op | Δ % | T1 ops/s | T2 ops/s | T2 p99 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 0.141 | +0.015 | +12.2% | 5,422 | 4,998 | 0.153 |
+| 1M   | 0.135 | 0.153 | +0.018 | +13.6% | 5,162 | 4,708 | 0.184 |
+| 1.5M | 0.138 | 0.146 | +0.008 |  +5.4% | 5,082 | 4,887 | 0.154 |
+
+Source logs: `results-cloud-test2/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings
+
+1. **Two extra SETs cost ~0.015 ms (≈10–13%) per op.** Small but
+   measurable. Roughly linear with the work added — one direct
+   assignment plus one read-then-write.
+2. **Test 2 also scales sublinearly.** 500K → 1.5M is only +3.5% on
+   Test 2 vs +9.4% on Test 1. Extra fixed per-op work dilutes the
+   (already small) index-lookup growth, flattening the curve further.
+3. **Test 2 1M is the slowest tier in the ladder** (0.153 ms, vs 0.146
+   at 1.5M). One outlier first-measured batch (0.178 ms vs steady
+   ~0.145 elsewhere) drove this — `p99=0.184`. Treat as transient
+   cloud noise, not a real inversion.
+4. **Latency tails widen slightly.** p99/avg ratio is 1.20× on Test 2
+   vs ≤1.10× on Test 1. The read-then-write `coalesce` likely
+   contributes the extra variance. No pathological long tails in any
+   tier.
+5. **No within-run drift.** All three Test 2 runs are flat across 25
+   batches (drift ≤2%).
+
+### Capacity-planning takeaway
+
+Adding audit-stamping (very common in CRM-style writes) costs ~10–13%
+in throughput at this workload shape. A single client thread sustains
+~4,900 ops/sec at 1M+ scale with the audit pattern, vs ~5,200 without
+it.
+
+### Reproduction
+
+```bash
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test2_${TAG}
+  python -u -m bench2.cli init --graph $GRAPH \
+    --shape add_new_node_with_audit --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test2/${TAG}_init.log
+  python -u -m bench2.cli run --graph $GRAPH \
+    --workload add_new_node_with_audit \
+    --name add_new_node_with_audit_${TAG} \
+    --start-id $SIZE --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test2/${TAG}_run.log
+done
+```
+

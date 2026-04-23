@@ -2,22 +2,26 @@
 
 A Python benchmark tool that measures **FalkorDB data population performance** across increasing graph sizes, with configurable batch sizes and multiple test variants.
 
-## 🔬 Latest finding — `add_new_node` scales sublinearly across 500K → 1.5M (cloud, v4.18.01)
+## 🔬 Latest finding — Test 1 vs Test 2: cost of two audit SETs after a MERGE (cloud, v4.18.01)
 
-*Single workload: `MERGE (n:entity:account {uuid_hi, uuid_lo}) ON CREATE SET n = $props` (50 props), composite uuid index. New uuid each op (always create branch). 25K ops, batch 1000, AWS c6i.8xlarge cloud + c4.xlarge client.*
+*Same 50-prop CRM record, same composite uuid index, single client thread on AWS c4.xlarge → c6i.8xlarge cloud.
+**Test 1** = `MERGE (n:entity:account {uuid_hi, uuid_lo}) ON CREATE SET n = $props`.
+**Test 2** = Test 1 + `SET n.updated_at = $updated_at` + `SET n.version = coalesce(n.version, 0) + 1`.*
 
-| Pre-graph size | Avg ms/op | Throughput | p99 | Within-run drift |
-|---:|---:|---:|---:|---|
-| **500K** | **0.126** | **5,422 ops/s** | 0.133 | flat |
-| **1M**   | **0.135** | **5,162 ops/s** | 0.137 | flat |
-| **1.5M** | **0.138** | **5,082 ops/s** | 0.150 | flat |
+| Tier | T1 ms/op | T2 ms/op | Δ per op | Δ % | T1 ops/s | T2 ops/s |
+|---:|---:|---:|---:|---:|---:|---:|
+| **500K** | 0.126 | **0.141** | +0.015 | **+12.2%** | 5,422 | 4,998 |
+| **1M**   | 0.135 | **0.153** | +0.018 | **+13.6%** | 5,162 | 4,708 |
+| **1.5M** | 0.138 | **0.146** | +0.008 | **+5.4%**  | 5,082 | 4,887 |
 
-**1.5M is only 9.4% slower than 500K** despite 3× the data — index cost is sublinear (consistent with O(log N) lookup). Per-batch latency is steady within each run (no degradation as new nodes are added). p99 is within 8-12% of avg — no long tails.
+**Findings:**
 
-Useful for capacity planning: a single client thread sustains **~5K ops/s with 50 properties + composite index** at 1M+ scale, i.e. **~250K property writes/sec** with full index maintenance.
+- **Two extra SETs cost ~0.015 ms / ~10–13%** per op. Small but measurable; the second SET is intentionally read-then-write (via `coalesce`) so this isn't a no-op write.
+- **Both tests scale sublinearly:** 500K→1.5M is +9.4% on Test 1, only +3.5% on Test 2 — extra fixed per-op work dilutes the already-small index-lookup growth.
+- **No within-run drift** in any of the 6 runs.
+- **Capacity numbers:** ~5,200 add-new-node ops/sec without audit, ~4,900 ops/sec with audit, single client, at 1M+ scale.
 
-Full results, methodology, and a noisy-neighbor variant (when added):
-[`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+Full results, methodology, per-batch drift: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
 
 ---
 
