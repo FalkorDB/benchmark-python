@@ -133,3 +133,48 @@ def init_graph(
                   f"(accounts + {extra_contacts:,} contacts)", flush=True)
 
     return nodes, edges
+
+
+def init_graph_add_new_node(
+    client: BenchmarkClient,
+    num_nodes: int,
+    indexed: bool = True,
+    batch_size: int = 1000,
+    verbose: bool = True,
+) -> tuple[int, int]:
+    """Init for Test 1 (add_new_node): num_nodes :entity:account 50-prop nodes, no edges.
+
+    Uses the SAME query and op shape as the bench (ADD_NEW_NODE_QUERY) so
+    that init writes are byte-for-byte equivalent to bench writes. The
+    bench then continues with start_id == num_nodes, producing a
+    contiguous uuid range with no overlap.
+    """
+    from bench2.workload import ADD_NEW_NODE_QUERY, iter_add_new_node_batches
+
+    if verbose:
+        print(f"[init] dropping graph '{client._graph_name}'", flush=True)
+    client.delete_graph()
+    client._graph = client._db.select_graph(client._graph_name)
+
+    if indexed:
+        if verbose:
+            print(f"[init] creating composite index :entity(uuid_hi, uuid_lo)", flush=True)
+        client.create_uuid_pair_index("entity")
+
+    if verbose:
+        print(f"[init] loading {num_nodes:,} :entity:account nodes (50 props each, no edges)", flush=True)
+
+    batches_total = (num_nodes + batch_size - 1) // batch_size
+    batches_done = 0
+    for ops in iter_add_new_node_batches(start_id=0, num_ops=num_nodes,
+                                         batch_size=batch_size, seed=1):
+        client.execute_query(ADD_NEW_NODE_QUERY, params={"ops": ops})
+        batches_done += 1
+        if verbose and batches_done % 5 == 0:
+            print(f"[init]   {batches_done}/{batches_total} batches "
+                  f"({batches_done * batch_size:,} nodes)", flush=True)
+
+    nodes, edges = client.graph_size()
+    if verbose:
+        print(f"[init] done — graph has {nodes:,} nodes / {edges:,} edges", flush=True)
+    return nodes, edges

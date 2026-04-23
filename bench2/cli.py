@@ -9,7 +9,7 @@ from pathlib import Path
 import click
 
 from benchmark.falkor_client import BenchmarkClient
-from bench2.init import init_graph
+from bench2.init import init_graph, init_graph_add_new_node
 from bench2.runner import run_benchmark
 from bench2.reporter import append_csv, write_markdown_summary
 
@@ -36,9 +36,20 @@ def _client(host: str, port: int, graph: str, username: str | None, password: st
 @click.option("--extra-contacts", default=0, show_default=True, type=int,
               help="Also load N :entity:contact nodes (sharing the composite index) "
                    "to test noisy-neighbor effects on the indexed account-MERGE.")
-def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, extra_contacts) -> None:
+@click.option("--shape", type=click.Choice(["pair", "add_new_node"]), default="pair",
+              show_default=True,
+              help="pair = legacy MERGE-pair init with hub/star edges; "
+                   "add_new_node = Test 1 init: single :entity:account nodes, 50 props, no edges.")
+def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, extra_contacts, shape) -> None:
     """Drop the graph and load the baseline."""
     client = _client(host, port, graph, username, password)
+    if shape == "add_new_node":
+        if extra_contacts:
+            raise click.UsageError("--extra-contacts is only supported with --shape pair")
+        n, e = init_graph_add_new_node(client, num_nodes=nodes, indexed=indexed,
+                                       batch_size=batch_size)
+        click.echo(f"OK — {n:,} nodes / {e:,} edges (indexed={indexed}, shape=add_new_node)")
+        return
     n, e = init_graph(client, num_nodes=nodes, indexed=indexed, batch_size=batch_size,
                       extra_contacts=extra_contacts)
     click.echo(f"OK — {n:,} nodes / {e:,} edges (indexed={indexed}, extra_contacts={extra_contacts:,})")
@@ -59,9 +70,10 @@ def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, 
               help="Number of pairs (each pair = 2 nodes + 1 edge).")
 @click.option("--batch-size", default=100, show_default=True, type=int)
 @click.option("--warmup-batches", default=10, show_default=True, type=int)
-@click.option("--workload", type=click.Choice(["pair", "upsert", "foreach"]), default="pair",
+@click.option("--workload", type=click.Choice(["pair", "upsert", "foreach", "add_new_node"]), default="pair",
               show_default=True,
-              help="pair = B1/B2/B4 MERGE-pair; upsert = B3 W7 slow query; foreach = B5 W7 FOREACH workaround")
+              help="pair = MERGE-pair; upsert = W7 slow query; foreach = W7 FOREACH workaround; "
+                   "add_new_node = Test 1 single MERGE :entity:account with 50 props.")
 def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops, batch_size, warmup_batches, workload) -> None:
     """Run the measured benchmark against an existing init graph."""
     client = _client(host, port, graph, username, password)
@@ -74,6 +86,9 @@ def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops,
     elif workload == "foreach":
         from bench2.workload import UPSERT_FOREACH_QUERY, iter_single_batches
         extra = {"query": UPSERT_FOREACH_QUERY, "iter_fn": iter_single_batches}
+    elif workload == "add_new_node":
+        from bench2.workload import ADD_NEW_NODE_QUERY, iter_add_new_node_batches
+        extra = {"query": ADD_NEW_NODE_QUERY, "iter_fn": iter_add_new_node_batches}
     r = run_benchmark(
         client, name=name, indexed=indexed, start_id=start_id,
         num_pairs=ops, batch_size=batch_size, warmup_batches=warmup_batches,

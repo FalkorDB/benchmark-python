@@ -51,6 +51,17 @@ UPSERT_FOREACH_QUERY = (
 )
 
 
+# Test 1 (add_new_node) — single MERGE on the composite uuid key, 50-prop
+# CRM-shaped record, two labels (:entity:account). MERGE always takes the
+# create branch (every uuid is fresh). ON CREATE SET writes the entire
+# 50-prop bag in one shot.
+ADD_NEW_NODE_QUERY = (
+    "UNWIND $ops AS op "
+    "MERGE (n:entity:account {uuid_hi: op.uuid_hi, uuid_lo: op.uuid_lo}) "
+    "  ON CREATE SET n = op.props"
+)
+
+
 def make_pair_op(a_id: int, b_id: int, rng: random.Random) -> dict:
     a_hi, a_lo = uuid_for_id(a_id)
     b_hi, b_lo = uuid_for_id(b_id)
@@ -105,6 +116,34 @@ def iter_single_batches(
     ops: list[dict] = []
     for k in range(num_ops):
         ops.append(make_single_op(start_id + k, rng))
+        if len(ops) >= batch_size:
+            yield ops
+            ops = []
+    if ops:
+        yield ops
+
+
+def make_add_new_node_op(n_id: int, rng: random.Random) -> dict:
+    """Op for the add_new_node (Test 1) query: 50-prop :entity:account record."""
+    from bench2.data import random_props_50
+    hi, lo = uuid_for_id(n_id)
+    props = random_props_50(rng)
+    props["uuid_hi"] = hi
+    props["uuid_lo"] = lo
+    return {"uuid_hi": hi, "uuid_lo": lo, "props": props}
+
+
+def iter_add_new_node_batches(
+    start_id: int,
+    num_ops: int,
+    batch_size: int,
+    seed: int = 42,
+) -> Iterator[list[dict]]:
+    """Yield batches of single-node 50-prop add_new_node ops (Test 1)."""
+    rng = random.Random(seed)
+    ops: list[dict] = []
+    for k in range(num_ops):
+        ops.append(make_add_new_node_op(start_id + k, rng))
         if len(ops) >= batch_size:
             yield ops
             ops = []

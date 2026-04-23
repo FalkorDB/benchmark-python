@@ -26,6 +26,28 @@ def random_props(rng: random.Random) -> dict:
     }
 
 
+# 48 non-uuid keys: 18 strings + 15 ints + 10 floats + 5 booleans.
+# Combined with the (uuid_hi, uuid_lo) pair this yields exactly 50 properties.
+def random_props_50(rng: random.Random) -> dict:
+    """Property bag matching a real CRM 'account' record at 50-prop scale.
+
+    Returns 48 non-uuid keys (18 str + 15 int + 10 float + 5 bool). The
+    caller is expected to also include `uuid_hi` and `uuid_lo` to reach
+    50 total keys (matching the indexed composite key).
+    """
+    out: dict = {}
+    for i in range(1, 19):
+        out[f"str_{i:02d}"] = "".join(rng.choices(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", k=12))
+    for i in range(1, 16):
+        out[f"int_{i:02d}"] = rng.randrange(0, 1_000_000)
+    for i in range(1, 11):
+        out[f"float_{i:02d}"] = rng.random() * 100.0
+    for i in range(1, 6):
+        out[f"bool_{i:02d}"] = rng.random() < 0.5
+    return out
+
+
 def hub_star_pairs(num_nodes: int) -> Iterator[tuple[int, int]]:
     """Yield (hub_id, spoke_id) edges for the hub/star topology.
 
