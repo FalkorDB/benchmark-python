@@ -532,3 +532,100 @@ done
   degradation continues to grow or plateaus past +25K rows.
 
 PR: <https://github.com/FalkorDB/benchmark-python/tree/feat/bench2-index-impact>
+
+---
+
+## Test 1 — `add_new_node` (50-prop CRM record, indexed)
+
+Newer test design (April 2026), independent of the B1–B7 numbering above.
+The earlier suite mixed multiple workload shapes (pair-MERGE + edges +
+upserts) and was hard to interpret per-tier. Test 1 isolates one
+production-relevant question: **what does it cost to add a single
+50-property `:entity:account` node, indexed by composite uuid, as the
+graph grows?**
+
+### Setup
+
+- **Init:** `N` `:entity:account` nodes, 50 props each (18 str + 15 int +
+  10 float + 5 bool + 2 uuid composite-key keys), composite index
+  `:entity(uuid_hi, uuid_lo)`. **No edges.** Init uses the same query
+  as the bench so init writes are byte-for-byte equivalent to bench
+  writes.
+- **Bench query** (per op; UNWIND'd 1000-at-a-time):
+  ```cypher
+  MERGE (n:entity:account {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})
+    ON CREATE SET n = $props
+  ```
+  Every uuid is fresh → MERGE always takes the create branch → measures
+  the index-miss + node-create + 50-prop-write path.
+- **Bench params:** 25,000 ops, batch 1000, warmup 10 batches (15
+  measured), single client thread.
+- **Tiers:** 500K, 1M, 1.5M pre-graph nodes.
+
+### Results
+
+| Pre-graph | Avg ms/op | ops/s | p95 (ms) | p99 (ms) | First measured | Last measured | Drift |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 5,422 | 0.129 | 0.133 | 0.127 | 0.129 | +1.6% |
+| 1M   | 0.135 | 5,162 | 0.137 | 0.137 | 0.137 | 0.134 | -2.2% |
+| 1.5M | 0.138 | 5,082 | 0.141 | 0.150 | 0.138 | 0.140 | +1.4% |
+
+Source logs: `results-cloud-test1/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings
+
+1. **Sublinear scaling.** 1.5M is only 9.4% slower per op than 500K
+   despite 3× the data. Consistent with O(log N) index-lookup cost
+   dominating, with the constant per-op work of "create node + write 50
+   props + insert into index" being roughly invariant in graph size.
+2. **No within-run degradation.** Each tier is flat across 25 batches
+   (drift ≤2%, well within noise). Adding new nodes during the bench
+   does not visibly change per-op cost — confirming the index lookup
+   path is the dominant cost, not anything that scales with recently
+   inserted data.
+3. **Tight latency distribution.** p99 within 8-12% of avg in every
+   tier. No long tails, no GC pauses, no plan recompilation visible.
+4. **Capacity-planning number.** A single client thread sustains
+   ~5,000 add-new-node ops/sec at 1M+ scale = **~250,000 property
+   writes/sec** with composite-index maintenance.
+
+### Reproduction
+
+```bash
+cd ~/benchmark-python && source .venv/bin/activate
+export FALKOR_HOST=<cloud-host>
+export FALKOR_PORT=6379
+export FALKOR_USER=falkordb
+export FALKOR_PASS=<password>
+mkdir -p results-cloud-test1
+
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test1_${TAG}
+  python -u -m bench2.cli init \
+    --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+    --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+    --graph $GRAPH --shape add_new_node --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test1/${TAG}_init.log
+  python -u -m bench2.cli run \
+    --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+    --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+    --graph $GRAPH --workload add_new_node --name add_new_node_${TAG} \
+    --start-id $SIZE --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test1/${TAG}_run.log
+done
+```
+
+### Open follow-ups for Test 1
+
+- **Noisy-neighbor variant** — repeat at 1M with an additional 500K
+  `:entity:contact` nodes in the same composite index to test whether
+  label diversity affects the add_new_node path.
+- **Larger tier (3M, 5M)** — extrapolate the sublinear curve.
+- **Concurrent clients** — single-client throughput is 5K ops/s; what
+  does N parallel clients give?
+

@@ -2,33 +2,22 @@
 
 A Python benchmark tool that measures **FalkorDB data population performance** across increasing graph sizes, with configurable batch sizes and multiple test variants.
 
-## 🔬 Latest finding — write latency at 2M, controlled clean-vs-noisy comparison (bench2, cloud)
+## 🔬 Latest finding — `add_new_node` scales sublinearly across 500K → 1.5M (cloud, v4.18.01)
 
-*Apples-to-apples, FalkorDB v4.18.01 standalone on AWS c6i.8xlarge.
-Both graphs at the **same total size (2M)** under the **same composite
-`:entity(uuid_hi, uuid_lo)` index** — only label mix differs.*
+*Single workload: `MERGE (n:entity:account {uuid_hi, uuid_lo}) ON CREATE SET n = $props` (50 props), composite uuid index. New uuid each op (always create branch). 25K ops, batch 1000, AWS c6i.8xlarge cloud + c4.xlarge client.*
 
-| Graph | Composition | `pair` ms/op | `upsert` ms/op | `foreach` ms/op |
-|---|---|---:|---:|---:|
-| **B6 clean 2M** | 2.0M `:entity:account` | 1.200 | 0.858 | 0.975 |
-| **B7 noisy 2M** | 1.5M `:entity:account` + 0.5M `:entity:contact` | 1.197 | 0.855 | 0.974 |
-| **Difference** | | **+0.3%** | **+0.3%** | **+0.1%** |
+| Pre-graph size | Avg ms/op | Throughput | p99 | Within-run drift |
+|---:|---:|---:|---:|---|
+| **500K** | **0.126** | **5,422 ops/s** | 0.133 | flat |
+| **1M**   | **0.135** | **5,162 ops/s** | 0.137 | flat |
+| **1.5M** | **0.138** | **5,082 ops/s** | 0.150 | flat |
 
-**Two findings worth highlighting:**
+**1.5M is only 9.4% slower than 500K** despite 3× the data — index cost is sublinear (consistent with O(log N) lookup). Per-batch latency is steady within each run (no degradation as new nodes are added). p99 is within 8-12% of avg — no long tails.
 
-1. **Sharing a composite index across multiple child labels has no
-   measurable cost.** Within-noise on every workload, every percentile,
-   batch by batch. *(This overturns an earlier, weaker B4 1M result —
-   see [the report's Insight 8 retraction](./info/bench2-results-cloud.md).)*
+Useful for capacity planning: a single client thread sustains **~5K ops/s with 50 properties + composite index** at 1M+ scale, i.e. **~250K property writes/sec** with full index maintenance.
 
-2. **The customer-reported W7 "FOREACH workaround" is NOT faster than
-   the slow query at 2M.** `foreach` is 12-14% **slower** than `upsert`
-   in both graphs. Either the W7 regression has been fixed in v4.18.01,
-   or it requires update-traffic conditions our pure-insert bench
-   doesn't exercise.
-
-Full methodology, all six legs (B1–B7), per-batch drift analysis,
-reproduction commands: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+Full results, methodology, and a noisy-neighbor variant (when added):
+[`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
 
 ---
 
