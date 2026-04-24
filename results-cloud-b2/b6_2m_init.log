@@ -1,0 +1,926 @@
+[init] dropping graph 'bench2_b6_clean_2m'
+[init] creating composite index :entity(uuid_hi, uuid_lo)
+[init] loading 1,000,000 MERGE-pairs (2,000,000 nodes, 1,000,000 edges)
+[init]   5,000 pairs loaded
+[init]   10,000 pairs loaded
+[init]   15,000 pairs loaded
+[init]   20,000 pairs loaded
+[init]   25,000 pairs loaded
+[init]   30,000 pairs loaded
+[init]   35,000 pairs loaded
+[init]   40,000 pairs loaded
+[init]   45,000 pairs loaded
+[init]   50,000 pairs loaded
+[init]   55,000 pairs loaded
+[init]   60,000 pairs loaded
+[init]   65,000 pairs loaded
+[init]   70,000 pairs loaded
+[init]   75,000 pairs loaded
+[init]   80,000 pairs loaded
+[init]   85,000 pairs loaded
+[init]   90,000 pairs loaded
+[init]   95,000 pairs loaded
+[init]   100,000 pairs loaded
+[init]   105,000 pairs loaded
+[init]   110,000 pairs loaded
+[init]   115,000 pairs loaded
+[init]   120,000 pairs loaded
+[init]   125,000 pairs loaded
+[init]   130,000 pairs loaded
+[init]   135,000 pairs loaded
+[init]   140,000 pairs loaded
+[init]   145,000 pairs loaded
+[init]   150,000 pairs loaded
+[init]   155,000 pairs loaded
+[init]   160,000 pairs loaded
+[init]   165,000 pairs loaded
+[init]   170,000 pairs loaded
+[init]   175,000 pairs loaded
+[init]   180,000 pairs loaded
+[init]   185,000 pairs loaded
+[init]   190,000 pairs loaded
+[init]   195,000 pairs loaded
+[init]   200,000 pairs loaded
+[init]   205,000 pairs loaded
+[init]   210,000 pairs loaded
+[init]   215,000 pairs loaded
+[init]   220,000 pairs loaded
+[init]   225,000 pairs loaded
+[init]   230,000 pairs loaded
+[init]   235,000 pairs loaded
+[init]   240,000 pairs loaded
+[init]   245,000 pairs loaded
+[init]   250,000 pairs loaded
+[init]   255,000 pairs loaded
+[init]   260,000 pairs loaded
+[init]   265,000 pairs loaded
+[init]   270,000 pairs loaded
+[init]   275,000 pairs loaded
+[init]   280,000 pairs loaded
+[init]   285,000 pairs loaded
+[init]   290,000 pairs loaded
+[init]   295,000 pairs loaded
+[init]   300,000 pairs loaded
+[init]   305,000 pairs loaded
+[init]   310,000 pairs loaded
+[init]   315,000 pairs loaded
+[init]   320,000 pairs loaded
+[init]   325,000 pairs loaded
+[init]   330,000 pairs loaded
+[init]   335,000 pairs loaded
+[init]   340,000 pairs loaded
+[init]   345,000 pairs loaded
+[init]   350,000 pairs loaded
+[init]   355,000 pairs loaded
+[init]   360,000 pairs loaded
+[init]   365,000 pairs loaded
+[init]   370,000 pairs loaded
+[init]   375,000 pairs loaded
+[init]   380,000 pairs loaded
+[init]   385,000 pairs loaded
+[init]   390,000 pairs loaded
+[init]   395,000 pairs loaded
+[init]   400,000 pairs loaded
+[init]   405,000 pairs loaded
+[init]   410,000 pairs loaded
+[init]   415,000 pairs loaded
+[init]   420,000 pairs loaded
+[init]   425,000 pairs loaded
+[init]   430,000 pairs loaded
+[init]   435,000 pairs loaded
+[init]   440,000 pairs loaded
+[init]   445,000 pairs loaded
+[init]   450,000 pairs loaded
+[init]   455,000 pairs loaded
+[init]   460,000 pairs loaded
+[init]   465,000 pairs loaded
+[init]   470,000 pairs loaded
+[init]   475,000 pairs loaded
+[init]   480,000 pairs loaded
+[init]   485,000 pairs loaded
+[init]   490,000 pairs loaded
+[init]   495,000 pairs loaded
+[init]   500,000 pairs loaded
+[init]   505,000 pairs loaded
+[init]   510,000 pairs loaded
+[init]   515,000 pairs loaded
+[init]   520,000 pairs loaded
+[init]   525,000 pairs loaded
+[init]   530,000 pairs loaded
+[init]   535,000 pairs loaded
+[init]   540,000 pairs loaded
+[init]   545,000 pairs loaded
+[init]   550,000 pairs loaded
+[init]   555,000 pairs loaded
+[init]   560,000 pairs loaded
+[init]   565,000 pairs loaded
+[init]   570,000 pairs loaded
+[init]   575,000 pairs loaded
+[init]   580,000 pairs loaded
+[init]   585,000 pairs loaded
+[init]   590,000 pairs loaded
+[init]   595,000 pairs loaded
+[init]   600,000 pairs loaded
+[init]   605,000 pairs loaded
+[init]   610,000 pairs loaded
+[init]   615,000 pairs loaded
+[init]   620,000 pairs loaded
+[init]   625,000 pairs loaded
+[init]   630,000 pairs loaded
+[init]   635,000 pairs loaded
+[init]   640,000 pairs loaded
+[init]   645,000 pairs loaded
+[init]   650,000 pairs loaded
+[init]   655,000 pairs loaded
+[init]   660,000 pairs loaded
+[init]   665,000 pairs loaded
+[init]   670,000 pairs loaded
+[init]   675,000 pairs loaded
+[init]   680,000 pairs loaded
+[init]   685,000 pairs loaded
+[init]   690,000 pairs loaded
+[init]   695,000 pairs loaded
+[init]   700,000 pairs loaded
+[init]   705,000 pairs loaded
+[init]   710,000 pairs loaded
+[init]   715,000 pairs loaded
+[init]   720,000 pairs loaded
+[init]   725,000 pairs loaded
+[init]   730,000 pairs loaded
+[init]   735,000 pairs loaded
+[init]   740,000 pairs loaded
+[init]   745,000 pairs loaded
+[init]   750,000 pairs loaded
+[init]   755,000 pairs loaded
+[init]   760,000 pairs loaded
+[init]   765,000 pairs loaded
+[init]   770,000 pairs loaded
+[init]   775,000 pairs loaded
+[init]   780,000 pairs loaded
+[init]   785,000 pairs loaded
+[init]   790,000 pairs loaded
+[init]   795,000 pairs loaded
+[init]   800,000 pairs loaded
+[init]   805,000 pairs loaded
+[init]   810,000 pairs loaded
+[init]   815,000 pairs loaded
+[init]   820,000 pairs loaded
+[init]   825,000 pairs loaded
+[init]   830,000 pairs loaded
+[init]   835,000 pairs loaded
+[init]   840,000 pairs loaded
+[init]   845,000 pairs loaded
+[init]   850,000 pairs loaded
+[init]   855,000 pairs loaded
+[init]   860,000 pairs loaded
+[init]   865,000 pairs loaded
+[init]   870,000 pairs loaded
+[init]   875,000 pairs loaded
+[init]   880,000 pairs loaded
+[init]   885,000 pairs loaded
+[init]   890,000 pairs loaded
+[init]   895,000 pairs loaded
+[init]   900,000 pairs loaded
+[init]   905,000 pairs loaded
+[init]   910,000 pairs loaded
+[init]   915,000 pairs loaded
+[init]   920,000 pairs loaded
+[init]   925,000 pairs loaded
+[init]   930,000 pairs loaded
+[init]   935,000 pairs loaded
+[init]   940,000 pairs loaded
+[init]   945,000 pairs loaded
+[init]   950,000 pairs loaded
+[init]   955,000 pairs loaded
+[init]   960,000 pairs loaded
+[init]   965,000 pairs loaded
+[init]   970,000 pairs loaded
+[init]   975,000 pairs loaded
+[init]   980,000 pairs loaded
+[init]   985,000 pairs loaded
+[init]   990,000 pairs loaded
+[init]   995,000 pairs loaded
+[init]   1,000,000 pairs loaded
+[init] adding hub/star edges between existing nodes
+[init]   hub/star 5/3600 batches (2,500 edges)
+[init]   hub/star 10/3600 batches (5,000 edges)
+[init]   hub/star 15/3600 batches (7,500 edges)
+[init]   hub/star 20/3600 batches (10,000 edges)
+[init]   hub/star 25/3600 batches (12,500 edges)
+[init]   hub/star 30/3600 batches (15,000 edges)
+[init]   hub/star 35/3600 batches (17,500 edges)
+[init]   hub/star 40/3600 batches (20,000 edges)
+[init]   hub/star 45/3600 batches (22,500 edges)
+[init]   hub/star 50/3600 batches (25,000 edges)
+[init]   hub/star 55/3600 batches (27,500 edges)
+[init]   hub/star 60/3600 batches (30,000 edges)
+[init]   hub/star 65/3600 batches (32,500 edges)
+[init]   hub/star 70/3600 batches (35,000 edges)
+[init]   hub/star 75/3600 batches (37,500 edges)
+[init]   hub/star 80/3600 batches (40,000 edges)
+[init]   hub/star 85/3600 batches (42,500 edges)
+[init]   hub/star 90/3600 batches (45,000 edges)
+[init]   hub/star 95/3600 batches (47,500 edges)
+[init]   hub/star 100/3600 batches (50,000 edges)
+[init]   hub/star 105/3600 batches (52,500 edges)
+[init]   hub/star 110/3600 batches (55,000 edges)
+[init]   hub/star 115/3600 batches (57,500 edges)
+[init]   hub/star 120/3600 batches (60,000 edges)
+[init]   hub/star 125/3600 batches (62,500 edges)
+[init]   hub/star 130/3600 batches (65,000 edges)
+[init]   hub/star 135/3600 batches (67,500 edges)
+[init]   hub/star 140/3600 batches (70,000 edges)
+[init]   hub/star 145/3600 batches (72,500 edges)
+[init]   hub/star 150/3600 batches (75,000 edges)
+[init]   hub/star 155/3600 batches (77,500 edges)
+[init]   hub/star 160/3600 batches (80,000 edges)
+[init]   hub/star 165/3600 batches (82,500 edges)
+[init]   hub/star 170/3600 batches (85,000 edges)
+[init]   hub/star 175/3600 batches (87,500 edges)
+[init]   hub/star 180/3600 batches (90,000 edges)
+[init]   hub/star 185/3600 batches (92,500 edges)
+[init]   hub/star 190/3600 batches (95,000 edges)
+[init]   hub/star 195/3600 batches (97,500 edges)
+[init]   hub/star 200/3600 batches (100,000 edges)
+[init]   hub/star 205/3600 batches (102,500 edges)
+[init]   hub/star 210/3600 batches (105,000 edges)
+[init]   hub/star 215/3600 batches (107,500 edges)
+[init]   hub/star 220/3600 batches (110,000 edges)
+[init]   hub/star 225/3600 batches (112,500 edges)
+[init]   hub/star 230/3600 batches (115,000 edges)
+[init]   hub/star 235/3600 batches (117,500 edges)
+[init]   hub/star 240/3600 batches (120,000 edges)
+[init]   hub/star 245/3600 batches (122,500 edges)
+[init]   hub/star 250/3600 batches (125,000 edges)
+[init]   hub/star 255/3600 batches (127,500 edges)
+[init]   hub/star 260/3600 batches (130,000 edges)
+[init]   hub/star 265/3600 batches (132,500 edges)
+[init]   hub/star 270/3600 batches (135,000 edges)
+[init]   hub/star 275/3600 batches (137,500 edges)
+[init]   hub/star 280/3600 batches (140,000 edges)
+[init]   hub/star 285/3600 batches (142,500 edges)
+[init]   hub/star 290/3600 batches (145,000 edges)
+[init]   hub/star 295/3600 batches (147,500 edges)
+[init]   hub/star 300/3600 batches (150,000 edges)
+[init]   hub/star 305/3600 batches (152,500 edges)
+[init]   hub/star 310/3600 batches (155,000 edges)
+[init]   hub/star 315/3600 batches (157,500 edges)
+[init]   hub/star 320/3600 batches (160,000 edges)
+[init]   hub/star 325/3600 batches (162,500 edges)
+[init]   hub/star 330/3600 batches (165,000 edges)
+[init]   hub/star 335/3600 batches (167,500 edges)
+[init]   hub/star 340/3600 batches (170,000 edges)
+[init]   hub/star 345/3600 batches (172,500 edges)
+[init]   hub/star 350/3600 batches (175,000 edges)
+[init]   hub/star 355/3600 batches (177,500 edges)
+[init]   hub/star 360/3600 batches (180,000 edges)
+[init]   hub/star 365/3600 batches (182,500 edges)
+[init]   hub/star 370/3600 batches (185,000 edges)
+[init]   hub/star 375/3600 batches (187,500 edges)
+[init]   hub/star 380/3600 batches (190,000 edges)
+[init]   hub/star 385/3600 batches (192,500 edges)
+[init]   hub/star 390/3600 batches (195,000 edges)
+[init]   hub/star 395/3600 batches (197,500 edges)
+[init]   hub/star 400/3600 batches (200,000 edges)
+[init]   hub/star 405/3600 batches (202,500 edges)
+[init]   hub/star 410/3600 batches (205,000 edges)
+[init]   hub/star 415/3600 batches (207,500 edges)
+[init]   hub/star 420/3600 batches (210,000 edges)
+[init]   hub/star 425/3600 batches (212,500 edges)
+[init]   hub/star 430/3600 batches (215,000 edges)
+[init]   hub/star 435/3600 batches (217,500 edges)
+[init]   hub/star 440/3600 batches (220,000 edges)
+[init]   hub/star 445/3600 batches (222,500 edges)
+[init]   hub/star 450/3600 batches (225,000 edges)
+[init]   hub/star 455/3600 batches (227,500 edges)
+[init]   hub/star 460/3600 batches (230,000 edges)
+[init]   hub/star 465/3600 batches (232,500 edges)
+[init]   hub/star 470/3600 batches (235,000 edges)
+[init]   hub/star 475/3600 batches (237,500 edges)
+[init]   hub/star 480/3600 batches (240,000 edges)
+[init]   hub/star 485/3600 batches (242,500 edges)
+[init]   hub/star 490/3600 batches (245,000 edges)
+[init]   hub/star 495/3600 batches (247,500 edges)
+[init]   hub/star 500/3600 batches (250,000 edges)
+[init]   hub/star 505/3600 batches (252,500 edges)
+[init]   hub/star 510/3600 batches (255,000 edges)
+[init]   hub/star 515/3600 batches (257,500 edges)
+[init]   hub/star 520/3600 batches (260,000 edges)
+[init]   hub/star 525/3600 batches (262,500 edges)
+[init]   hub/star 530/3600 batches (265,000 edges)
+[init]   hub/star 535/3600 batches (267,500 edges)
+[init]   hub/star 540/3600 batches (270,000 edges)
+[init]   hub/star 545/3600 batches (272,500 edges)
+[init]   hub/star 550/3600 batches (275,000 edges)
+[init]   hub/star 555/3600 batches (277,500 edges)
+[init]   hub/star 560/3600 batches (280,000 edges)
+[init]   hub/star 565/3600 batches (282,500 edges)
+[init]   hub/star 570/3600 batches (285,000 edges)
+[init]   hub/star 575/3600 batches (287,500 edges)
+[init]   hub/star 580/3600 batches (290,000 edges)
+[init]   hub/star 585/3600 batches (292,500 edges)
+[init]   hub/star 590/3600 batches (295,000 edges)
+[init]   hub/star 595/3600 batches (297,500 edges)
+[init]   hub/star 600/3600 batches (300,000 edges)
+[init]   hub/star 605/3600 batches (302,500 edges)
+[init]   hub/star 610/3600 batches (305,000 edges)
+[init]   hub/star 615/3600 batches (307,500 edges)
+[init]   hub/star 620/3600 batches (310,000 edges)
+[init]   hub/star 625/3600 batches (312,500 edges)
+[init]   hub/star 630/3600 batches (315,000 edges)
+[init]   hub/star 635/3600 batches (317,500 edges)
+[init]   hub/star 640/3600 batches (320,000 edges)
+[init]   hub/star 645/3600 batches (322,500 edges)
+[init]   hub/star 650/3600 batches (325,000 edges)
+[init]   hub/star 655/3600 batches (327,500 edges)
+[init]   hub/star 660/3600 batches (330,000 edges)
+[init]   hub/star 665/3600 batches (332,500 edges)
+[init]   hub/star 670/3600 batches (335,000 edges)
+[init]   hub/star 675/3600 batches (337,500 edges)
+[init]   hub/star 680/3600 batches (340,000 edges)
+[init]   hub/star 685/3600 batches (342,500 edges)
+[init]   hub/star 690/3600 batches (345,000 edges)
+[init]   hub/star 695/3600 batches (347,500 edges)
+[init]   hub/star 700/3600 batches (350,000 edges)
+[init]   hub/star 705/3600 batches (352,500 edges)
+[init]   hub/star 710/3600 batches (355,000 edges)
+[init]   hub/star 715/3600 batches (357,500 edges)
+[init]   hub/star 720/3600 batches (360,000 edges)
+[init]   hub/star 725/3600 batches (362,500 edges)
+[init]   hub/star 730/3600 batches (365,000 edges)
+[init]   hub/star 735/3600 batches (367,500 edges)
+[init]   hub/star 740/3600 batches (370,000 edges)
+[init]   hub/star 745/3600 batches (372,500 edges)
+[init]   hub/star 750/3600 batches (375,000 edges)
+[init]   hub/star 755/3600 batches (377,500 edges)
+[init]   hub/star 760/3600 batches (380,000 edges)
+[init]   hub/star 765/3600 batches (382,500 edges)
+[init]   hub/star 770/3600 batches (385,000 edges)
+[init]   hub/star 775/3600 batches (387,500 edges)
+[init]   hub/star 780/3600 batches (390,000 edges)
+[init]   hub/star 785/3600 batches (392,500 edges)
+[init]   hub/star 790/3600 batches (395,000 edges)
+[init]   hub/star 795/3600 batches (397,500 edges)
+[init]   hub/star 800/3600 batches (400,000 edges)
+[init]   hub/star 805/3600 batches (402,500 edges)
+[init]   hub/star 810/3600 batches (405,000 edges)
+[init]   hub/star 815/3600 batches (407,500 edges)
+[init]   hub/star 820/3600 batches (410,000 edges)
+[init]   hub/star 825/3600 batches (412,500 edges)
+[init]   hub/star 830/3600 batches (415,000 edges)
+[init]   hub/star 835/3600 batches (417,500 edges)
+[init]   hub/star 840/3600 batches (420,000 edges)
+[init]   hub/star 845/3600 batches (422,500 edges)
+[init]   hub/star 850/3600 batches (425,000 edges)
+[init]   hub/star 855/3600 batches (427,500 edges)
+[init]   hub/star 860/3600 batches (430,000 edges)
+[init]   hub/star 865/3600 batches (432,500 edges)
+[init]   hub/star 870/3600 batches (435,000 edges)
+[init]   hub/star 875/3600 batches (437,500 edges)
+[init]   hub/star 880/3600 batches (440,000 edges)
+[init]   hub/star 885/3600 batches (442,500 edges)
+[init]   hub/star 890/3600 batches (445,000 edges)
+[init]   hub/star 895/3600 batches (447,500 edges)
+[init]   hub/star 900/3600 batches (450,000 edges)
+[init]   hub/star 905/3600 batches (452,500 edges)
+[init]   hub/star 910/3600 batches (455,000 edges)
+[init]   hub/star 915/3600 batches (457,500 edges)
+[init]   hub/star 920/3600 batches (460,000 edges)
+[init]   hub/star 925/3600 batches (462,500 edges)
+[init]   hub/star 930/3600 batches (465,000 edges)
+[init]   hub/star 935/3600 batches (467,500 edges)
+[init]   hub/star 940/3600 batches (470,000 edges)
+[init]   hub/star 945/3600 batches (472,500 edges)
+[init]   hub/star 950/3600 batches (475,000 edges)
+[init]   hub/star 955/3600 batches (477,500 edges)
+[init]   hub/star 960/3600 batches (480,000 edges)
+[init]   hub/star 965/3600 batches (482,500 edges)
+[init]   hub/star 970/3600 batches (485,000 edges)
+[init]   hub/star 975/3600 batches (487,500 edges)
+[init]   hub/star 980/3600 batches (490,000 edges)
+[init]   hub/star 985/3600 batches (492,500 edges)
+[init]   hub/star 990/3600 batches (495,000 edges)
+[init]   hub/star 995/3600 batches (497,500 edges)
+[init]   hub/star 1000/3600 batches (500,000 edges)
+[init]   hub/star 1005/3600 batches (502,500 edges)
+[init]   hub/star 1010/3600 batches (505,000 edges)
+[init]   hub/star 1015/3600 batches (507,500 edges)
+[init]   hub/star 1020/3600 batches (510,000 edges)
+[init]   hub/star 1025/3600 batches (512,500 edges)
+[init]   hub/star 1030/3600 batches (515,000 edges)
+[init]   hub/star 1035/3600 batches (517,500 edges)
+[init]   hub/star 1040/3600 batches (520,000 edges)
+[init]   hub/star 1045/3600 batches (522,500 edges)
+[init]   hub/star 1050/3600 batches (525,000 edges)
+[init]   hub/star 1055/3600 batches (527,500 edges)
+[init]   hub/star 1060/3600 batches (530,000 edges)
+[init]   hub/star 1065/3600 batches (532,500 edges)
+[init]   hub/star 1070/3600 batches (535,000 edges)
+[init]   hub/star 1075/3600 batches (537,500 edges)
+[init]   hub/star 1080/3600 batches (540,000 edges)
+[init]   hub/star 1085/3600 batches (542,500 edges)
+[init]   hub/star 1090/3600 batches (545,000 edges)
+[init]   hub/star 1095/3600 batches (547,500 edges)
+[init]   hub/star 1100/3600 batches (550,000 edges)
+[init]   hub/star 1105/3600 batches (552,500 edges)
+[init]   hub/star 1110/3600 batches (555,000 edges)
+[init]   hub/star 1115/3600 batches (557,500 edges)
+[init]   hub/star 1120/3600 batches (560,000 edges)
+[init]   hub/star 1125/3600 batches (562,500 edges)
+[init]   hub/star 1130/3600 batches (565,000 edges)
+[init]   hub/star 1135/3600 batches (567,500 edges)
+[init]   hub/star 1140/3600 batches (570,000 edges)
+[init]   hub/star 1145/3600 batches (572,500 edges)
+[init]   hub/star 1150/3600 batches (575,000 edges)
+[init]   hub/star 1155/3600 batches (577,500 edges)
+[init]   hub/star 1160/3600 batches (580,000 edges)
+[init]   hub/star 1165/3600 batches (582,500 edges)
+[init]   hub/star 1170/3600 batches (585,000 edges)
+[init]   hub/star 1175/3600 batches (587,500 edges)
+[init]   hub/star 1180/3600 batches (590,000 edges)
+[init]   hub/star 1185/3600 batches (592,500 edges)
+[init]   hub/star 1190/3600 batches (595,000 edges)
+[init]   hub/star 1195/3600 batches (597,500 edges)
+[init]   hub/star 1200/3600 batches (600,000 edges)
+[init]   hub/star 1205/3600 batches (602,500 edges)
+[init]   hub/star 1210/3600 batches (605,000 edges)
+[init]   hub/star 1215/3600 batches (607,500 edges)
+[init]   hub/star 1220/3600 batches (610,000 edges)
+[init]   hub/star 1225/3600 batches (612,500 edges)
+[init]   hub/star 1230/3600 batches (615,000 edges)
+[init]   hub/star 1235/3600 batches (617,500 edges)
+[init]   hub/star 1240/3600 batches (620,000 edges)
+[init]   hub/star 1245/3600 batches (622,500 edges)
+[init]   hub/star 1250/3600 batches (625,000 edges)
+[init]   hub/star 1255/3600 batches (627,500 edges)
+[init]   hub/star 1260/3600 batches (630,000 edges)
+[init]   hub/star 1265/3600 batches (632,500 edges)
+[init]   hub/star 1270/3600 batches (635,000 edges)
+[init]   hub/star 1275/3600 batches (637,500 edges)
+[init]   hub/star 1280/3600 batches (640,000 edges)
+[init]   hub/star 1285/3600 batches (642,500 edges)
+[init]   hub/star 1290/3600 batches (645,000 edges)
+[init]   hub/star 1295/3600 batches (647,500 edges)
+[init]   hub/star 1300/3600 batches (650,000 edges)
+[init]   hub/star 1305/3600 batches (652,500 edges)
+[init]   hub/star 1310/3600 batches (655,000 edges)
+[init]   hub/star 1315/3600 batches (657,500 edges)
+[init]   hub/star 1320/3600 batches (660,000 edges)
+[init]   hub/star 1325/3600 batches (662,500 edges)
+[init]   hub/star 1330/3600 batches (665,000 edges)
+[init]   hub/star 1335/3600 batches (667,500 edges)
+[init]   hub/star 1340/3600 batches (670,000 edges)
+[init]   hub/star 1345/3600 batches (672,500 edges)
+[init]   hub/star 1350/3600 batches (675,000 edges)
+[init]   hub/star 1355/3600 batches (677,500 edges)
+[init]   hub/star 1360/3600 batches (680,000 edges)
+[init]   hub/star 1365/3600 batches (682,500 edges)
+[init]   hub/star 1370/3600 batches (685,000 edges)
+[init]   hub/star 1375/3600 batches (687,500 edges)
+[init]   hub/star 1380/3600 batches (690,000 edges)
+[init]   hub/star 1385/3600 batches (692,500 edges)
+[init]   hub/star 1390/3600 batches (695,000 edges)
+[init]   hub/star 1395/3600 batches (697,500 edges)
+[init]   hub/star 1400/3600 batches (700,000 edges)
+[init]   hub/star 1405/3600 batches (702,500 edges)
+[init]   hub/star 1410/3600 batches (705,000 edges)
+[init]   hub/star 1415/3600 batches (707,500 edges)
+[init]   hub/star 1420/3600 batches (710,000 edges)
+[init]   hub/star 1425/3600 batches (712,500 edges)
+[init]   hub/star 1430/3600 batches (715,000 edges)
+[init]   hub/star 1435/3600 batches (717,500 edges)
+[init]   hub/star 1440/3600 batches (720,000 edges)
+[init]   hub/star 1445/3600 batches (722,500 edges)
+[init]   hub/star 1450/3600 batches (725,000 edges)
+[init]   hub/star 1455/3600 batches (727,500 edges)
+[init]   hub/star 1460/3600 batches (730,000 edges)
+[init]   hub/star 1465/3600 batches (732,500 edges)
+[init]   hub/star 1470/3600 batches (735,000 edges)
+[init]   hub/star 1475/3600 batches (737,500 edges)
+[init]   hub/star 1480/3600 batches (740,000 edges)
+[init]   hub/star 1485/3600 batches (742,500 edges)
+[init]   hub/star 1490/3600 batches (745,000 edges)
+[init]   hub/star 1495/3600 batches (747,500 edges)
+[init]   hub/star 1500/3600 batches (750,000 edges)
+[init]   hub/star 1505/3600 batches (752,500 edges)
+[init]   hub/star 1510/3600 batches (755,000 edges)
+[init]   hub/star 1515/3600 batches (757,500 edges)
+[init]   hub/star 1520/3600 batches (760,000 edges)
+[init]   hub/star 1525/3600 batches (762,500 edges)
+[init]   hub/star 1530/3600 batches (765,000 edges)
+[init]   hub/star 1535/3600 batches (767,500 edges)
+[init]   hub/star 1540/3600 batches (770,000 edges)
+[init]   hub/star 1545/3600 batches (772,500 edges)
+[init]   hub/star 1550/3600 batches (775,000 edges)
+[init]   hub/star 1555/3600 batches (777,500 edges)
+[init]   hub/star 1560/3600 batches (780,000 edges)
+[init]   hub/star 1565/3600 batches (782,500 edges)
+[init]   hub/star 1570/3600 batches (785,000 edges)
+[init]   hub/star 1575/3600 batches (787,500 edges)
+[init]   hub/star 1580/3600 batches (790,000 edges)
+[init]   hub/star 1585/3600 batches (792,500 edges)
+[init]   hub/star 1590/3600 batches (795,000 edges)
+[init]   hub/star 1595/3600 batches (797,500 edges)
+[init]   hub/star 1600/3600 batches (800,000 edges)
+[init]   hub/star 1605/3600 batches (802,500 edges)
+[init]   hub/star 1610/3600 batches (805,000 edges)
+[init]   hub/star 1615/3600 batches (807,500 edges)
+[init]   hub/star 1620/3600 batches (810,000 edges)
+[init]   hub/star 1625/3600 batches (812,500 edges)
+[init]   hub/star 1630/3600 batches (815,000 edges)
+[init]   hub/star 1635/3600 batches (817,500 edges)
+[init]   hub/star 1640/3600 batches (820,000 edges)
+[init]   hub/star 1645/3600 batches (822,500 edges)
+[init]   hub/star 1650/3600 batches (825,000 edges)
+[init]   hub/star 1655/3600 batches (827,500 edges)
+[init]   hub/star 1660/3600 batches (830,000 edges)
+[init]   hub/star 1665/3600 batches (832,500 edges)
+[init]   hub/star 1670/3600 batches (835,000 edges)
+[init]   hub/star 1675/3600 batches (837,500 edges)
+[init]   hub/star 1680/3600 batches (840,000 edges)
+[init]   hub/star 1685/3600 batches (842,500 edges)
+[init]   hub/star 1690/3600 batches (845,000 edges)
+[init]   hub/star 1695/3600 batches (847,500 edges)
+[init]   hub/star 1700/3600 batches (850,000 edges)
+[init]   hub/star 1705/3600 batches (852,500 edges)
+[init]   hub/star 1710/3600 batches (855,000 edges)
+[init]   hub/star 1715/3600 batches (857,500 edges)
+[init]   hub/star 1720/3600 batches (860,000 edges)
+[init]   hub/star 1725/3600 batches (862,500 edges)
+[init]   hub/star 1730/3600 batches (865,000 edges)
+[init]   hub/star 1735/3600 batches (867,500 edges)
+[init]   hub/star 1740/3600 batches (870,000 edges)
+[init]   hub/star 1745/3600 batches (872,500 edges)
+[init]   hub/star 1750/3600 batches (875,000 edges)
+[init]   hub/star 1755/3600 batches (877,500 edges)
+[init]   hub/star 1760/3600 batches (880,000 edges)
+[init]   hub/star 1765/3600 batches (882,500 edges)
+[init]   hub/star 1770/3600 batches (885,000 edges)
+[init]   hub/star 1775/3600 batches (887,500 edges)
+[init]   hub/star 1780/3600 batches (890,000 edges)
+[init]   hub/star 1785/3600 batches (892,500 edges)
+[init]   hub/star 1790/3600 batches (895,000 edges)
+[init]   hub/star 1795/3600 batches (897,500 edges)
+[init]   hub/star 1800/3600 batches (900,000 edges)
+[init]   hub/star 1805/3600 batches (902,500 edges)
+[init]   hub/star 1810/3600 batches (905,000 edges)
+[init]   hub/star 1815/3600 batches (907,500 edges)
+[init]   hub/star 1820/3600 batches (910,000 edges)
+[init]   hub/star 1825/3600 batches (912,500 edges)
+[init]   hub/star 1830/3600 batches (915,000 edges)
+[init]   hub/star 1835/3600 batches (917,500 edges)
+[init]   hub/star 1840/3600 batches (920,000 edges)
+[init]   hub/star 1845/3600 batches (922,500 edges)
+[init]   hub/star 1850/3600 batches (925,000 edges)
+[init]   hub/star 1855/3600 batches (927,500 edges)
+[init]   hub/star 1860/3600 batches (930,000 edges)
+[init]   hub/star 1865/3600 batches (932,500 edges)
+[init]   hub/star 1870/3600 batches (935,000 edges)
+[init]   hub/star 1875/3600 batches (937,500 edges)
+[init]   hub/star 1880/3600 batches (940,000 edges)
+[init]   hub/star 1885/3600 batches (942,500 edges)
+[init]   hub/star 1890/3600 batches (945,000 edges)
+[init]   hub/star 1895/3600 batches (947,500 edges)
+[init]   hub/star 1900/3600 batches (950,000 edges)
+[init]   hub/star 1905/3600 batches (952,500 edges)
+[init]   hub/star 1910/3600 batches (955,000 edges)
+[init]   hub/star 1915/3600 batches (957,500 edges)
+[init]   hub/star 1920/3600 batches (960,000 edges)
+[init]   hub/star 1925/3600 batches (962,500 edges)
+[init]   hub/star 1930/3600 batches (965,000 edges)
+[init]   hub/star 1935/3600 batches (967,500 edges)
+[init]   hub/star 1940/3600 batches (970,000 edges)
+[init]   hub/star 1945/3600 batches (972,500 edges)
+[init]   hub/star 1950/3600 batches (975,000 edges)
+[init]   hub/star 1955/3600 batches (977,500 edges)
+[init]   hub/star 1960/3600 batches (980,000 edges)
+[init]   hub/star 1965/3600 batches (982,500 edges)
+[init]   hub/star 1970/3600 batches (985,000 edges)
+[init]   hub/star 1975/3600 batches (987,500 edges)
+[init]   hub/star 1980/3600 batches (990,000 edges)
+[init]   hub/star 1985/3600 batches (992,500 edges)
+[init]   hub/star 1990/3600 batches (995,000 edges)
+[init]   hub/star 1995/3600 batches (997,500 edges)
+[init]   hub/star 2000/3600 batches (1,000,000 edges)
+[init]   hub/star 2005/3600 batches (1,002,500 edges)
+[init]   hub/star 2010/3600 batches (1,005,000 edges)
+[init]   hub/star 2015/3600 batches (1,007,500 edges)
+[init]   hub/star 2020/3600 batches (1,010,000 edges)
+[init]   hub/star 2025/3600 batches (1,012,500 edges)
+[init]   hub/star 2030/3600 batches (1,015,000 edges)
+[init]   hub/star 2035/3600 batches (1,017,500 edges)
+[init]   hub/star 2040/3600 batches (1,020,000 edges)
+[init]   hub/star 2045/3600 batches (1,022,500 edges)
+[init]   hub/star 2050/3600 batches (1,025,000 edges)
+[init]   hub/star 2055/3600 batches (1,027,500 edges)
+[init]   hub/star 2060/3600 batches (1,030,000 edges)
+[init]   hub/star 2065/3600 batches (1,032,500 edges)
+[init]   hub/star 2070/3600 batches (1,035,000 edges)
+[init]   hub/star 2075/3600 batches (1,037,500 edges)
+[init]   hub/star 2080/3600 batches (1,040,000 edges)
+[init]   hub/star 2085/3600 batches (1,042,500 edges)
+[init]   hub/star 2090/3600 batches (1,045,000 edges)
+[init]   hub/star 2095/3600 batches (1,047,500 edges)
+[init]   hub/star 2100/3600 batches (1,050,000 edges)
+[init]   hub/star 2105/3600 batches (1,052,500 edges)
+[init]   hub/star 2110/3600 batches (1,055,000 edges)
+[init]   hub/star 2115/3600 batches (1,057,500 edges)
+[init]   hub/star 2120/3600 batches (1,060,000 edges)
+[init]   hub/star 2125/3600 batches (1,062,500 edges)
+[init]   hub/star 2130/3600 batches (1,065,000 edges)
+[init]   hub/star 2135/3600 batches (1,067,500 edges)
+[init]   hub/star 2140/3600 batches (1,070,000 edges)
+[init]   hub/star 2145/3600 batches (1,072,500 edges)
+[init]   hub/star 2150/3600 batches (1,075,000 edges)
+[init]   hub/star 2155/3600 batches (1,077,500 edges)
+[init]   hub/star 2160/3600 batches (1,080,000 edges)
+[init]   hub/star 2165/3600 batches (1,082,500 edges)
+[init]   hub/star 2170/3600 batches (1,085,000 edges)
+[init]   hub/star 2175/3600 batches (1,087,500 edges)
+[init]   hub/star 2180/3600 batches (1,090,000 edges)
+[init]   hub/star 2185/3600 batches (1,092,500 edges)
+[init]   hub/star 2190/3600 batches (1,095,000 edges)
+[init]   hub/star 2195/3600 batches (1,097,500 edges)
+[init]   hub/star 2200/3600 batches (1,100,000 edges)
+[init]   hub/star 2205/3600 batches (1,102,500 edges)
+[init]   hub/star 2210/3600 batches (1,105,000 edges)
+[init]   hub/star 2215/3600 batches (1,107,500 edges)
+[init]   hub/star 2220/3600 batches (1,110,000 edges)
+[init]   hub/star 2225/3600 batches (1,112,500 edges)
+[init]   hub/star 2230/3600 batches (1,115,000 edges)
+[init]   hub/star 2235/3600 batches (1,117,500 edges)
+[init]   hub/star 2240/3600 batches (1,120,000 edges)
+[init]   hub/star 2245/3600 batches (1,122,500 edges)
+[init]   hub/star 2250/3600 batches (1,125,000 edges)
+[init]   hub/star 2255/3600 batches (1,127,500 edges)
+[init]   hub/star 2260/3600 batches (1,130,000 edges)
+[init]   hub/star 2265/3600 batches (1,132,500 edges)
+[init]   hub/star 2270/3600 batches (1,135,000 edges)
+[init]   hub/star 2275/3600 batches (1,137,500 edges)
+[init]   hub/star 2280/3600 batches (1,140,000 edges)
+[init]   hub/star 2285/3600 batches (1,142,500 edges)
+[init]   hub/star 2290/3600 batches (1,145,000 edges)
+[init]   hub/star 2295/3600 batches (1,147,500 edges)
+[init]   hub/star 2300/3600 batches (1,150,000 edges)
+[init]   hub/star 2305/3600 batches (1,152,500 edges)
+[init]   hub/star 2310/3600 batches (1,155,000 edges)
+[init]   hub/star 2315/3600 batches (1,157,500 edges)
+[init]   hub/star 2320/3600 batches (1,160,000 edges)
+[init]   hub/star 2325/3600 batches (1,162,500 edges)
+[init]   hub/star 2330/3600 batches (1,165,000 edges)
+[init]   hub/star 2335/3600 batches (1,167,500 edges)
+[init]   hub/star 2340/3600 batches (1,170,000 edges)
+[init]   hub/star 2345/3600 batches (1,172,500 edges)
+[init]   hub/star 2350/3600 batches (1,175,000 edges)
+[init]   hub/star 2355/3600 batches (1,177,500 edges)
+[init]   hub/star 2360/3600 batches (1,180,000 edges)
+[init]   hub/star 2365/3600 batches (1,182,500 edges)
+[init]   hub/star 2370/3600 batches (1,185,000 edges)
+[init]   hub/star 2375/3600 batches (1,187,500 edges)
+[init]   hub/star 2380/3600 batches (1,190,000 edges)
+[init]   hub/star 2385/3600 batches (1,192,500 edges)
+[init]   hub/star 2390/3600 batches (1,195,000 edges)
+[init]   hub/star 2395/3600 batches (1,197,500 edges)
+[init]   hub/star 2400/3600 batches (1,200,000 edges)
+[init]   hub/star 2405/3600 batches (1,202,500 edges)
+[init]   hub/star 2410/3600 batches (1,205,000 edges)
+[init]   hub/star 2415/3600 batches (1,207,500 edges)
+[init]   hub/star 2420/3600 batches (1,210,000 edges)
+[init]   hub/star 2425/3600 batches (1,212,500 edges)
+[init]   hub/star 2430/3600 batches (1,215,000 edges)
+[init]   hub/star 2435/3600 batches (1,217,500 edges)
+[init]   hub/star 2440/3600 batches (1,220,000 edges)
+[init]   hub/star 2445/3600 batches (1,222,500 edges)
+[init]   hub/star 2450/3600 batches (1,225,000 edges)
+[init]   hub/star 2455/3600 batches (1,227,500 edges)
+[init]   hub/star 2460/3600 batches (1,230,000 edges)
+[init]   hub/star 2465/3600 batches (1,232,500 edges)
+[init]   hub/star 2470/3600 batches (1,235,000 edges)
+[init]   hub/star 2475/3600 batches (1,237,500 edges)
+[init]   hub/star 2480/3600 batches (1,240,000 edges)
+[init]   hub/star 2485/3600 batches (1,242,500 edges)
+[init]   hub/star 2490/3600 batches (1,245,000 edges)
+[init]   hub/star 2495/3600 batches (1,247,500 edges)
+[init]   hub/star 2500/3600 batches (1,250,000 edges)
+[init]   hub/star 2505/3600 batches (1,252,500 edges)
+[init]   hub/star 2510/3600 batches (1,255,000 edges)
+[init]   hub/star 2515/3600 batches (1,257,500 edges)
+[init]   hub/star 2520/3600 batches (1,260,000 edges)
+[init]   hub/star 2525/3600 batches (1,262,500 edges)
+[init]   hub/star 2530/3600 batches (1,265,000 edges)
+[init]   hub/star 2535/3600 batches (1,267,500 edges)
+[init]   hub/star 2540/3600 batches (1,270,000 edges)
+[init]   hub/star 2545/3600 batches (1,272,500 edges)
+[init]   hub/star 2550/3600 batches (1,275,000 edges)
+[init]   hub/star 2555/3600 batches (1,277,500 edges)
+[init]   hub/star 2560/3600 batches (1,280,000 edges)
+[init]   hub/star 2565/3600 batches (1,282,500 edges)
+[init]   hub/star 2570/3600 batches (1,285,000 edges)
+[init]   hub/star 2575/3600 batches (1,287,500 edges)
+[init]   hub/star 2580/3600 batches (1,290,000 edges)
+[init]   hub/star 2585/3600 batches (1,292,500 edges)
+[init]   hub/star 2590/3600 batches (1,295,000 edges)
+[init]   hub/star 2595/3600 batches (1,297,500 edges)
+[init]   hub/star 2600/3600 batches (1,300,000 edges)
+[init]   hub/star 2605/3600 batches (1,302,500 edges)
+[init]   hub/star 2610/3600 batches (1,305,000 edges)
+[init]   hub/star 2615/3600 batches (1,307,500 edges)
+[init]   hub/star 2620/3600 batches (1,310,000 edges)
+[init]   hub/star 2625/3600 batches (1,312,500 edges)
+[init]   hub/star 2630/3600 batches (1,315,000 edges)
+[init]   hub/star 2635/3600 batches (1,317,500 edges)
+[init]   hub/star 2640/3600 batches (1,320,000 edges)
+[init]   hub/star 2645/3600 batches (1,322,500 edges)
+[init]   hub/star 2650/3600 batches (1,325,000 edges)
+[init]   hub/star 2655/3600 batches (1,327,500 edges)
+[init]   hub/star 2660/3600 batches (1,330,000 edges)
+[init]   hub/star 2665/3600 batches (1,332,500 edges)
+[init]   hub/star 2670/3600 batches (1,335,000 edges)
+[init]   hub/star 2675/3600 batches (1,337,500 edges)
+[init]   hub/star 2680/3600 batches (1,340,000 edges)
+[init]   hub/star 2685/3600 batches (1,342,500 edges)
+[init]   hub/star 2690/3600 batches (1,345,000 edges)
+[init]   hub/star 2695/3600 batches (1,347,500 edges)
+[init]   hub/star 2700/3600 batches (1,350,000 edges)
+[init]   hub/star 2705/3600 batches (1,352,500 edges)
+[init]   hub/star 2710/3600 batches (1,355,000 edges)
+[init]   hub/star 2715/3600 batches (1,357,500 edges)
+[init]   hub/star 2720/3600 batches (1,360,000 edges)
+[init]   hub/star 2725/3600 batches (1,362,500 edges)
+[init]   hub/star 2730/3600 batches (1,365,000 edges)
+[init]   hub/star 2735/3600 batches (1,367,500 edges)
+[init]   hub/star 2740/3600 batches (1,370,000 edges)
+[init]   hub/star 2745/3600 batches (1,372,500 edges)
+[init]   hub/star 2750/3600 batches (1,375,000 edges)
+[init]   hub/star 2755/3600 batches (1,377,500 edges)
+[init]   hub/star 2760/3600 batches (1,380,000 edges)
+[init]   hub/star 2765/3600 batches (1,382,500 edges)
+[init]   hub/star 2770/3600 batches (1,385,000 edges)
+[init]   hub/star 2775/3600 batches (1,387,500 edges)
+[init]   hub/star 2780/3600 batches (1,390,000 edges)
+[init]   hub/star 2785/3600 batches (1,392,500 edges)
+[init]   hub/star 2790/3600 batches (1,395,000 edges)
+[init]   hub/star 2795/3600 batches (1,397,500 edges)
+[init]   hub/star 2800/3600 batches (1,400,000 edges)
+[init]   hub/star 2805/3600 batches (1,402,500 edges)
+[init]   hub/star 2810/3600 batches (1,405,000 edges)
+[init]   hub/star 2815/3600 batches (1,407,500 edges)
+[init]   hub/star 2820/3600 batches (1,410,000 edges)
+[init]   hub/star 2825/3600 batches (1,412,500 edges)
+[init]   hub/star 2830/3600 batches (1,415,000 edges)
+[init]   hub/star 2835/3600 batches (1,417,500 edges)
+[init]   hub/star 2840/3600 batches (1,420,000 edges)
+[init]   hub/star 2845/3600 batches (1,422,500 edges)
+[init]   hub/star 2850/3600 batches (1,425,000 edges)
+[init]   hub/star 2855/3600 batches (1,427,500 edges)
+[init]   hub/star 2860/3600 batches (1,430,000 edges)
+[init]   hub/star 2865/3600 batches (1,432,500 edges)
+[init]   hub/star 2870/3600 batches (1,435,000 edges)
+[init]   hub/star 2875/3600 batches (1,437,500 edges)
+[init]   hub/star 2880/3600 batches (1,440,000 edges)
+[init]   hub/star 2885/3600 batches (1,442,500 edges)
+[init]   hub/star 2890/3600 batches (1,445,000 edges)
+[init]   hub/star 2895/3600 batches (1,447,500 edges)
+[init]   hub/star 2900/3600 batches (1,450,000 edges)
+[init]   hub/star 2905/3600 batches (1,452,500 edges)
+[init]   hub/star 2910/3600 batches (1,455,000 edges)
+[init]   hub/star 2915/3600 batches (1,457,500 edges)
+[init]   hub/star 2920/3600 batches (1,460,000 edges)
+[init]   hub/star 2925/3600 batches (1,462,500 edges)
+[init]   hub/star 2930/3600 batches (1,465,000 edges)
+[init]   hub/star 2935/3600 batches (1,467,500 edges)
+[init]   hub/star 2940/3600 batches (1,470,000 edges)
+[init]   hub/star 2945/3600 batches (1,472,500 edges)
+[init]   hub/star 2950/3600 batches (1,475,000 edges)
+[init]   hub/star 2955/3600 batches (1,477,500 edges)
+[init]   hub/star 2960/3600 batches (1,480,000 edges)
+[init]   hub/star 2965/3600 batches (1,482,500 edges)
+[init]   hub/star 2970/3600 batches (1,485,000 edges)
+[init]   hub/star 2975/3600 batches (1,487,500 edges)
+[init]   hub/star 2980/3600 batches (1,490,000 edges)
+[init]   hub/star 2985/3600 batches (1,492,500 edges)
+[init]   hub/star 2990/3600 batches (1,495,000 edges)
+[init]   hub/star 2995/3600 batches (1,497,500 edges)
+[init]   hub/star 3000/3600 batches (1,500,000 edges)
+[init]   hub/star 3005/3600 batches (1,502,500 edges)
+[init]   hub/star 3010/3600 batches (1,505,000 edges)
+[init]   hub/star 3015/3600 batches (1,507,500 edges)
+[init]   hub/star 3020/3600 batches (1,510,000 edges)
+[init]   hub/star 3025/3600 batches (1,512,500 edges)
+[init]   hub/star 3030/3600 batches (1,515,000 edges)
+[init]   hub/star 3035/3600 batches (1,517,500 edges)
+[init]   hub/star 3040/3600 batches (1,520,000 edges)
+[init]   hub/star 3045/3600 batches (1,522,500 edges)
+[init]   hub/star 3050/3600 batches (1,525,000 edges)
+[init]   hub/star 3055/3600 batches (1,527,500 edges)
+[init]   hub/star 3060/3600 batches (1,530,000 edges)
+[init]   hub/star 3065/3600 batches (1,532,500 edges)
+[init]   hub/star 3070/3600 batches (1,535,000 edges)
+[init]   hub/star 3075/3600 batches (1,537,500 edges)
+[init]   hub/star 3080/3600 batches (1,540,000 edges)
+[init]   hub/star 3085/3600 batches (1,542,500 edges)
+[init]   hub/star 3090/3600 batches (1,545,000 edges)
+[init]   hub/star 3095/3600 batches (1,547,500 edges)
+[init]   hub/star 3100/3600 batches (1,550,000 edges)
+[init]   hub/star 3105/3600 batches (1,552,500 edges)
+[init]   hub/star 3110/3600 batches (1,555,000 edges)
+[init]   hub/star 3115/3600 batches (1,557,500 edges)
+[init]   hub/star 3120/3600 batches (1,560,000 edges)
+[init]   hub/star 3125/3600 batches (1,562,500 edges)
+[init]   hub/star 3130/3600 batches (1,565,000 edges)
+[init]   hub/star 3135/3600 batches (1,567,500 edges)
+[init]   hub/star 3140/3600 batches (1,570,000 edges)
+[init]   hub/star 3145/3600 batches (1,572,500 edges)
+[init]   hub/star 3150/3600 batches (1,575,000 edges)
+[init]   hub/star 3155/3600 batches (1,577,500 edges)
+[init]   hub/star 3160/3600 batches (1,580,000 edges)
+[init]   hub/star 3165/3600 batches (1,582,500 edges)
+[init]   hub/star 3170/3600 batches (1,585,000 edges)
+[init]   hub/star 3175/3600 batches (1,587,500 edges)
+[init]   hub/star 3180/3600 batches (1,590,000 edges)
+[init]   hub/star 3185/3600 batches (1,592,500 edges)
+[init]   hub/star 3190/3600 batches (1,595,000 edges)
+[init]   hub/star 3195/3600 batches (1,597,500 edges)
+[init]   hub/star 3200/3600 batches (1,600,000 edges)
+[init]   hub/star 3205/3600 batches (1,602,500 edges)
+[init]   hub/star 3210/3600 batches (1,605,000 edges)
+[init]   hub/star 3215/3600 batches (1,607,500 edges)
+[init]   hub/star 3220/3600 batches (1,610,000 edges)
+[init]   hub/star 3225/3600 batches (1,612,500 edges)
+[init]   hub/star 3230/3600 batches (1,615,000 edges)
+[init]   hub/star 3235/3600 batches (1,617,500 edges)
+[init]   hub/star 3240/3600 batches (1,620,000 edges)
+[init]   hub/star 3245/3600 batches (1,622,500 edges)
+[init]   hub/star 3250/3600 batches (1,625,000 edges)
+[init]   hub/star 3255/3600 batches (1,627,500 edges)
+[init]   hub/star 3260/3600 batches (1,630,000 edges)
+[init]   hub/star 3265/3600 batches (1,632,500 edges)
+[init]   hub/star 3270/3600 batches (1,635,000 edges)
+[init]   hub/star 3275/3600 batches (1,637,500 edges)
+[init]   hub/star 3280/3600 batches (1,640,000 edges)
+[init]   hub/star 3285/3600 batches (1,642,500 edges)
+[init]   hub/star 3290/3600 batches (1,645,000 edges)
+[init]   hub/star 3295/3600 batches (1,647,500 edges)
+[init]   hub/star 3300/3600 batches (1,650,000 edges)
+[init]   hub/star 3305/3600 batches (1,652,500 edges)
+[init]   hub/star 3310/3600 batches (1,655,000 edges)
+[init]   hub/star 3315/3600 batches (1,657,500 edges)
+[init]   hub/star 3320/3600 batches (1,660,000 edges)
+[init]   hub/star 3325/3600 batches (1,662,500 edges)
+[init]   hub/star 3330/3600 batches (1,665,000 edges)
+[init]   hub/star 3335/3600 batches (1,667,500 edges)
+[init]   hub/star 3340/3600 batches (1,670,000 edges)
+[init]   hub/star 3345/3600 batches (1,672,500 edges)
+[init]   hub/star 3350/3600 batches (1,675,000 edges)
+[init]   hub/star 3355/3600 batches (1,677,500 edges)
+[init]   hub/star 3360/3600 batches (1,680,000 edges)
+[init]   hub/star 3365/3600 batches (1,682,500 edges)
+[init]   hub/star 3370/3600 batches (1,685,000 edges)
+[init]   hub/star 3375/3600 batches (1,687,500 edges)
+[init]   hub/star 3380/3600 batches (1,690,000 edges)
+[init]   hub/star 3385/3600 batches (1,692,500 edges)
+[init]   hub/star 3390/3600 batches (1,695,000 edges)
+[init]   hub/star 3395/3600 batches (1,697,500 edges)
+[init]   hub/star 3400/3600 batches (1,700,000 edges)
+[init]   hub/star 3405/3600 batches (1,702,500 edges)
+[init]   hub/star 3410/3600 batches (1,705,000 edges)
+[init]   hub/star 3415/3600 batches (1,707,500 edges)
+[init]   hub/star 3420/3600 batches (1,710,000 edges)
+[init]   hub/star 3425/3600 batches (1,712,500 edges)
+[init]   hub/star 3430/3600 batches (1,715,000 edges)
+[init]   hub/star 3435/3600 batches (1,717,500 edges)
+[init]   hub/star 3440/3600 batches (1,720,000 edges)
+[init]   hub/star 3445/3600 batches (1,722,500 edges)
+[init]   hub/star 3450/3600 batches (1,725,000 edges)
+[init]   hub/star 3455/3600 batches (1,727,500 edges)
+[init]   hub/star 3460/3600 batches (1,730,000 edges)
+[init]   hub/star 3465/3600 batches (1,732,500 edges)
+[init]   hub/star 3470/3600 batches (1,735,000 edges)
+[init]   hub/star 3475/3600 batches (1,737,500 edges)
+[init]   hub/star 3480/3600 batches (1,740,000 edges)
+[init]   hub/star 3485/3600 batches (1,742,500 edges)
+[init]   hub/star 3490/3600 batches (1,745,000 edges)
+[init]   hub/star 3495/3600 batches (1,747,500 edges)
+[init]   hub/star 3500/3600 batches (1,750,000 edges)
+[init]   hub/star 3505/3600 batches (1,752,500 edges)
+[init]   hub/star 3510/3600 batches (1,755,000 edges)
+[init]   hub/star 3515/3600 batches (1,757,500 edges)
+[init]   hub/star 3520/3600 batches (1,760,000 edges)
+[init]   hub/star 3525/3600 batches (1,762,500 edges)
+[init]   hub/star 3530/3600 batches (1,765,000 edges)
+[init]   hub/star 3535/3600 batches (1,767,500 edges)
+[init]   hub/star 3540/3600 batches (1,770,000 edges)
+[init]   hub/star 3545/3600 batches (1,772,500 edges)
+[init]   hub/star 3550/3600 batches (1,775,000 edges)
+[init]   hub/star 3555/3600 batches (1,777,500 edges)
+[init]   hub/star 3560/3600 batches (1,780,000 edges)
+[init]   hub/star 3565/3600 batches (1,782,500 edges)
+[init]   hub/star 3570/3600 batches (1,785,000 edges)
+[init]   hub/star 3575/3600 batches (1,787,500 edges)
+[init]   hub/star 3580/3600 batches (1,790,000 edges)
+[init]   hub/star 3585/3600 batches (1,792,500 edges)
+[init]   hub/star 3590/3600 batches (1,795,000 edges)
+[init]   hub/star 3595/3600 batches (1,797,500 edges)
+[init]   hub/star 3600/3600 batches (1,800,000 edges)
+[init] done with accounts — graph has 2,000,000 nodes / 2,800,000 edges
+OK — 2,000,000 nodes / 2,800,000 edges (indexed=True, extra_contacts=0)

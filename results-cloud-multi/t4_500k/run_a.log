@@ -1,0 +1,19 @@
+[run] pre: 500,000 nodes / 0 edges  (graph=multi_t4_500k, workload=upsert_w7_active)
+[bench:upsert_w7_active_t4_500k_A] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:upsert_w7_active_t4_500k_A]   batch 1 (warmup) batch_total=3592.2 ms per_op=3.592 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 2 (warmup) batch_total=3964.5 ms per_op=3.964 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 3 (warmup) batch_total=7355.0 ms per_op=7.355 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 4 (warmup) batch_total=8398.9 ms per_op=8.399 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 5 (warmup) batch_total=7589.6 ms per_op=7.590 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 6 (warmup) batch_total=8295.7 ms per_op=8.296 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 7 (warmup) batch_total=8306.3 ms per_op=8.306 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 8 (warmup) batch_total=8425.1 ms per_op=8.425 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 9 (warmup) batch_total=7998.8 ms per_op=7.999 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 10 (warmup) batch_total=7192.8 ms per_op=7.193 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 11 (measured) batch_total=8247.7 ms per_op=8.248 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 12 (measured) batch_total=8533.6 ms per_op=8.534 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 13 (measured) batch_total=8205.7 ms per_op=8.206 ms
+[bench:upsert_w7_active_t4_500k_A]   batch 15 avg(last5)=8.312 ms/op
+[bench:upsert_w7_active_t4_500k_A]   batch 20 avg(last5)=8.163 ms/op
+[bench:upsert_w7_active_t4_500k_A]   batch 25 avg(last5)=8.065 ms/op
+[run] upsert_w7_active_t4_500k_A: 121 ops/s  avg=8.1803 ms/op  p95=8.9049  p99=8.9924

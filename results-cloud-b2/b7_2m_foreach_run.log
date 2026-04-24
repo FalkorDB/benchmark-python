@@ -1,0 +1,19 @@
+[run] pre: 2,075,000 nodes / 2,125,000 edges  (graph=bench2_b7_noisy_2m, workload=foreach)
+[bench:foreach_b7_2m] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:foreach_b7_2m]   batch 1 (warmup) batch_total=934.6 ms per_op=0.935 ms
+[bench:foreach_b7_2m]   batch 2 (warmup) batch_total=932.7 ms per_op=0.933 ms
+[bench:foreach_b7_2m]   batch 3 (warmup) batch_total=946.8 ms per_op=0.947 ms
+[bench:foreach_b7_2m]   batch 4 (warmup) batch_total=965.8 ms per_op=0.966 ms
+[bench:foreach_b7_2m]   batch 5 (warmup) batch_total=962.6 ms per_op=0.963 ms
+[bench:foreach_b7_2m]   batch 6 (warmup) batch_total=1042.5 ms per_op=1.042 ms
+[bench:foreach_b7_2m]   batch 7 (warmup) batch_total=984.3 ms per_op=0.984 ms
+[bench:foreach_b7_2m]   batch 8 (warmup) batch_total=996.0 ms per_op=0.996 ms
+[bench:foreach_b7_2m]   batch 9 (warmup) batch_total=1016.3 ms per_op=1.016 ms
+[bench:foreach_b7_2m]   batch 10 (warmup) batch_total=1016.3 ms per_op=1.016 ms
+[bench:foreach_b7_2m]   batch 11 (measured) batch_total=1067.0 ms per_op=1.067 ms
+[bench:foreach_b7_2m]   batch 12 (measured) batch_total=1128.0 ms per_op=1.128 ms
+[bench:foreach_b7_2m]   batch 13 (measured) batch_total=897.3 ms per_op=0.897 ms
+[bench:foreach_b7_2m]   batch 15 avg(last5)=0.973 ms/op
+[bench:foreach_b7_2m]   batch 20 avg(last5)=0.958 ms/op
+[bench:foreach_b7_2m]   batch 25 avg(last5)=0.992 ms/op
+[run] foreach_b7_2m: 1,018 ops/s  avg=0.9740 ms/op  p95=1.0670  p99=1.1280

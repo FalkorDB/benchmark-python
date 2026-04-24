@@ -2,22 +2,29 @@
 
 A Python benchmark tool that measures **FalkorDB data population performance** across increasing graph sizes, with configurable batch sizes and multiple test variants.
 
-## 🚨 Latest finding — noisy-neighbor labels cost 20× at 1M (bench2, cloud)
+## 🔬 Latest finding — Tests 1–5 from **two** EC2 clients (cloud, FalkorDB v4.18.01)
 
-*Apples-to-apples, FalkorDB v4.18.01 standalone on AWS c6i.8xlarge:*
+*Same 50-prop CRM record + composite uuid index. Two `c4.xlarge` clients
+firing 25K ops each over disjoint id ranges against the same `c6i.8xlarge`
+cloud standalone. Combined throughput (Σ = client A + client B) below.*
 
-| Graph | Composition | Total index entries | MERGE-pair avg | Throughput |
-|---|---|---:|---:|---:|
-| B2 1M (clean) | 1M `:entity:account` | 1.0M | **0.090 ms/op** | **9,317 ops/s** |
-| B4 1M (noisy) | 1M `:entity:account` + 500K `:entity:contact` *(same composite `:entity(uuid_hi, uuid_lo)` index)* | 1.5M (+50%) | **1.804 ms/op** | **549 ops/s** |
-| **Impact** | | | **20× slower** | **17× drop** |
+| Tier | T1 add | T2 audit | T3 W7 (REMOVE) | T4 W7 (active) | **T5 delete** |
+|---:|---:|---:|---:|---:|---:|
+| **500K Σ ops/s** | 8,014 | 9,671 | 239 | 247 | **20,012** |
+| **1M Σ ops/s**   | 9,703 | 9,142 | 140 | 141 | **14,188** |
+| **1.5M Σ ops/s** | 9,899 | 6,310 | 104 | 425* | **12,431** |
+| **vs single (1M)** | **1.88×** | **1.94×** | **1.02×** | **1.04×** | **1.16×** |
 
-A **50% increase in index cardinality** via a different child label under the **same composite index** produces a **20× latency hit** on writes — wildly super-linear.
+\* T4 1.5M is anomalously fast vs surrounding cells; treat as outlier pending re-run.
 
-**Immediate recommendation:** do **not** share a composite key index across multiple child labels. Partition it — use `:account(uuid_hi, uuid_lo)`, `:contact(uuid_hi, uuid_lo)`, etc. as separate indexes.
+**Headline takeaways:**
 
-See the full report with methodology, all legs (B1/B2/B3/B4), W7 customer pattern reproduction at 1M, and reproduction commands:
-[`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+- **Cheap workloads (T1, T2, T5) scale near-linearly with client count** — adding a second client roughly doubled throughput at 1M.
+- **Heavy `SET n = $props` workloads (T3, T4) DO NOT scale.** Combined throughput equals single-client; per-client latency doubles. **Server CPU is the bottleneck — adding application clients won't help customers running W7-shaped writes.**
+- Single-client baselines (T1: 0.135 ms, T3: 7.3 ms, T5: 0.075 ms at 1M) are still the canonical numbers; multi-client just confirms the bottleneck location per workload.
+
+Full results + methodology: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+Multi-client orchestrator: [`scripts/bench2/run_multi_matrix.sh`](./scripts/bench2/run_multi_matrix.sh)
 
 ---
 

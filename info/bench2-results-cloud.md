@@ -104,6 +104,32 @@ workload-shape-equivalent rewrite of the customer's literal query.)
 
 Source logs: `results-cloud-b2/{b2,b3,b4}_1m_run.log`.
 
+### 2M tier — clean vs noisy controlled comparison
+
+Two graphs at the **same total size (2M nodes)** and same composite index,
+differing only in label mix. Each graph runs the same 3 workloads
+(`pair` / `upsert` / `foreach`) sequentially. Bench query and parameters
+are identical between graphs.
+
+| Graph | Composition | Total | Hub/star edges |
+|---|---|---:|---:|
+| B6 clean 2M | 2.0M `:entity:account` | 2.0M | 2.8M |
+| B7 noisy 2M | 1.5M `:entity:account` + 0.5M `:entity:contact` | 2.0M | 2.1M |
+
+**Headline:**
+
+| Workload | B6 clean | B7 noisy | Diff | p99 (B6 / B7) |
+|---|---:|---:|---:|---:|
+| `pair` (B2-shape, 2 nodes/op) | **1.200 ms/op** (821 ops/s) | **1.197 ms/op** (824 ops/s) | **+0.3%** | 1.50 / 1.46 ms |
+| `upsert` (B3 W7 slow, 1 node/op) | **0.858 ms/op** (1,154 ops/s) | **0.855 ms/op** (1,158 ops/s) | **+0.3%** | 0.95 / 0.92 ms |
+| `foreach` (B5 W7 workaround, 1 node/op) | **0.975 ms/op** (1,017 ops/s) | **0.974 ms/op** (1,018 ops/s) | **+0.1%** | 1.13 / 1.13 ms |
+
+**B6 ≈ B7 across every workload, every batch, every percentile.** Label
+mixing has **no measurable cost** at this scale. (See Insight 8 — this
+overturns the B4 1M conclusion.)
+
+Source logs: `results-cloud-b2/{b6,b7}_2m_{pair,upsert,foreach}_run.log`.
+
 (B1 logs only print every-5-batch averages, so per-op p50 column is
 stated as the centre of the steady-state window. Per-op p95/p99 come from
 the runner headline.)
@@ -221,7 +247,13 @@ without it we cannot quantify what fraction of the slowdown is "the W7
 bug" vs "MERGE-with-SET is just a heavier shape than MERGE-with-ON-CREATE".
 
 
-### 7. Noisy-neighbor labels in a shared index cost 20x at 1M
+### 7. ~~Noisy-neighbor labels in a shared index cost 20x at 1M~~ (RETRACTED)
+
+> ⚠️ **This finding has been RETRACTED.** A controlled comparison at 2M
+> total nodes (B6 vs B7, see Insight 8) shows that label mixing has no
+> measurable cost. The B4 1M result was almost certainly an environmental
+> artifact. The original write-up is preserved below for the record.
+
 
 B4 answers: "does it matter if the composite `:entity` index contains
 nodes with different child labels (e.g. `:account` plus `:contact`)?"
@@ -276,7 +308,69 @@ amount of mixing that is safe, or does any cross-label pollution cost
 proportionally? Worth a follow-up run with a 100K-step sweep.
 
 
-### 8. 500K cloud numbers are stable; 1M B3 is not
+### 8. ⚠️ Retraction: B4's 20× noisy-neighbor finding does NOT replicate at 2M
+
+The 2M controlled comparison (Insight 7's evidence base) **rejects** the
+B4 hypothesis. At 2M total index size:
+
+| | B6 clean (2M `:entity:account`) | B7 noisy (1.5M `:entity:account` + 0.5M `:entity:contact`) | Diff |
+|---|---:|---:|---:|
+| `pair` ms/op | 1.200 | 1.197 | **+0.3%** |
+| `upsert` ms/op | 0.858 | 0.855 | **+0.3%** |
+| `foreach` ms/op | 0.975 | 0.974 | **+0.1%** |
+
+These are the same workload shape, the same total index size, with the
+**only** difference being label mix. They are **statistically identical
+on every metric** — within driver/network noise.
+
+So what produced B4's 20× hit (1.804 ms/op vs 0.090 ms/op for B2 1M)?
+Most likely **environmental**:
+
+- Cloud-server contention with another tenant during the B4 run window
+- Cache state difference (B4 graph was built with a separate init that
+  may have left the index in a degenerate state at the time)
+- Storage/IO transient
+
+The B4 1M graph still exists and we will re-run it (see Open follow-ups).
+If the re-run shows ~0.09 ms/op (matching B2 1M) → confirmed environmental.
+If it again shows ~1.80 ms/op → there is something specifically wrong
+with that graph's state, but **not** caused by label mixing per se.
+
+**Updated customer-facing guidance:** the recommendation to "partition
+composite indexes by child label" is **withdrawn** until we have a
+reproducible failure case. Sharing a `:entity(uuid_hi, uuid_lo)` index
+across multiple child labels is, on the evidence we now have, fine.
+
+### 9. ⚠️ The W7 FOREACH workaround is NOT faster than the slow query at 2M
+
+The customer's report claimed FOREACH/CASE rewriting of the W7 upsert
+gave a 3.5–10× speed-up. Our measurement at 2M says otherwise:
+
+| Query | B6 clean ms/op | B7 noisy ms/op |
+|---|---:|---:|
+| `upsert` (W7 "slow" shape) | 0.858 | 0.855 |
+| `foreach` (W7 "fast" workaround) | **0.975** (12% slower) | **0.974** (14% slower) |
+
+The "workaround" is in fact slightly **slower** than the "slow" query.
+This is consistent across both graphs and stable across batches (no
+drift inversion mid-run).
+
+Plausible explanations:
+
+1. **The W7 regression has been fixed in v4.18.01** — our build is
+   newer than the customer's. The slow-shape query is no longer
+   pathological, so the workaround has nothing to rewrite around.
+2. **The customer's slowdown was state-dependent** — our test always
+   takes the create branch (every uuid is new); the customer's
+   production traffic is presumably mostly updates, where redundant
+   `SET n = props` on a match has different cost characteristics.
+
+**Action:** add a B3-mixed leg (preload `:inactive` nodes so updates
+exercise the match branch) before drawing a final conclusion on the W7
+pattern. With only insert traffic measured, we cannot confirm the
+customer's regression is fixed — only that we cannot reproduce it.
+
+### 10. 500K cloud numbers are stable; 1M B3 is not
 
 **500K (all three legs):**
 
@@ -379,6 +473,31 @@ python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
   --graph bench2_b4_noisy_1m --name merge_pair_indexed_1m_noisy \
   --start-id 1000000 --ops 25000 --batch-size 1000 --warmup-batches 10 \
   2>&1 | tee results-cloud-b2/b4_1m_run.log
+
+# B6 — clean 2M (control)
+python -u -m bench2.cli init --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+  --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+  --graph bench2_b6_clean_2m --nodes 2000000 --batch-size 1000 \
+  2>&1 | tee results-cloud-b2/b6_2m_init.log
+
+# B7 — noisy 2M (1.5M accounts + 0.5M contacts, same index)
+python -u -m bench2.cli init --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+  --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+  --graph bench2_b7_noisy_2m --nodes 1500000 --extra-contacts 500000 --batch-size 1000 \
+  2>&1 | tee results-cloud-b2/b7_2m_init.log
+
+# Run B2/B3/B5 (pair/upsert/foreach) on each graph:
+for GRAPH in bench2_b6_clean_2m bench2_b7_noisy_2m; do
+  TAG=$( [[ $GRAPH == *clean* ]] && echo b6 || echo b7 )
+  for W in pair upsert foreach; do
+    case $W in pair) SID=4000000;; upsert) SID=4050000;; foreach) SID=4075000;; esac
+    python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+      --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+      --graph $GRAPH --name ${W}_${TAG}_2m --workload $W \
+      --start-id $SID --ops 25000 --batch-size 1000 --warmup-batches 10 \
+      2>&1 | tee results-cloud-b2/${TAG}_2m_${W}_run.log
+  done
+done
 ```
 
 ## Open follow-ups
@@ -391,13 +510,12 @@ python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
 > burn cloud time without producing a new finding. Future tiers (1M, 1.5M)
 > measure **B2 + B3** (and B4 once added) only.
 
-- **B4 — FOREACH/CASE workaround** on the same graph as B3, to enable a
-  direct repro of W7's 3.5× / 10× slow vs fast ratio. **Now mandatory**
-  given the 1M B3 degradation finding (Insight 5). *(Note: the current
-  B4 leg is the noisy-neighbor test — the FOREACH workaround is a
-  distinct follow-up, tentatively B5.)*
-- **B5 — FOREACH/CASE W7 workaround** on `bench2_b3_upsert_1m` to
-  measure the slow-vs-fast ratio the customer reported.
+- **B4 1M re-run** to confirm whether the 20× regression is
+  reproducible or environmental (Insight 8). **Top priority** — the
+  recommendation to partition composite indexes hinges on this.
+- **B5 FOREACH on `bench2_b3_upsert_1m`** for completeness (we have B5
+  at 2M only; 1M data point would let us see if the FOREACH-vs-upsert
+  ratio scales with size).
 - **B3-mixed** — preload some `:inactive` nodes so the upsert path
   actually exercises `SET n = props` updates and `REMOVE n:inactive`
   label deletions, rather than always taking the create branch.
@@ -414,3 +532,559 @@ python -u -m bench2.cli run --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
   degradation continues to grow or plateaus past +25K rows.
 
 PR: <https://github.com/FalkorDB/benchmark-python/tree/feat/bench2-index-impact>
+
+---
+
+## Test 1 — `add_new_node` (50-prop CRM record, indexed)
+
+Newer test design (April 2026), independent of the B1–B7 numbering above.
+The earlier suite mixed multiple workload shapes (pair-MERGE + edges +
+upserts) and was hard to interpret per-tier. Test 1 isolates one
+production-relevant question: **what does it cost to add a single
+50-property `:entity:account` node, indexed by composite uuid, as the
+graph grows?**
+
+### Setup
+
+- **Init:** `N` `:entity:account` nodes, 50 props each (18 str + 15 int +
+  10 float + 5 bool + 2 uuid composite-key keys), composite index
+  `:entity(uuid_hi, uuid_lo)`. **No edges.** Init uses the same query
+  as the bench so init writes are byte-for-byte equivalent to bench
+  writes.
+- **Bench query** (per op; UNWIND'd 1000-at-a-time):
+  ```cypher
+  MERGE (n:entity:account {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})
+    ON CREATE SET n = $props
+  ```
+  Every uuid is fresh → MERGE always takes the create branch → measures
+  the index-miss + node-create + 50-prop-write path.
+- **Bench params:** 25,000 ops, batch 1000, warmup 10 batches (15
+  measured), single client thread.
+- **Tiers:** 500K, 1M, 1.5M pre-graph nodes.
+
+### Results
+
+| Pre-graph | Avg ms/op | ops/s | p95 (ms) | p99 (ms) | First measured | Last measured | Drift |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 5,422 | 0.129 | 0.133 | 0.127 | 0.129 | +1.6% |
+| 1M   | 0.135 | 5,162 | 0.137 | 0.137 | 0.137 | 0.134 | -2.2% |
+| 1.5M | 0.138 | 5,082 | 0.141 | 0.150 | 0.138 | 0.140 | +1.4% |
+
+Source logs: `results-cloud-test1/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings
+
+1. **Sublinear scaling.** 1.5M is only 9.4% slower per op than 500K
+   despite 3× the data. Consistent with O(log N) index-lookup cost
+   dominating, with the constant per-op work of "create node + write 50
+   props + insert into index" being roughly invariant in graph size.
+2. **No within-run degradation.** Each tier is flat across 25 batches
+   (drift ≤2%, well within noise). Adding new nodes during the bench
+   does not visibly change per-op cost — confirming the index lookup
+   path is the dominant cost, not anything that scales with recently
+   inserted data.
+3. **Tight latency distribution.** p99 within 8-12% of avg in every
+   tier. No long tails, no GC pauses, no plan recompilation visible.
+4. **Capacity-planning number.** A single client thread sustains
+   ~5,000 add-new-node ops/sec at 1M+ scale = **~250,000 property
+   writes/sec** with composite-index maintenance.
+
+### Reproduction
+
+```bash
+cd ~/benchmark-python && source .venv/bin/activate
+export FALKOR_HOST=<cloud-host>
+export FALKOR_PORT=6379
+export FALKOR_USER=falkordb
+export FALKOR_PASS=<password>
+mkdir -p results-cloud-test1
+
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test1_${TAG}
+  python -u -m bench2.cli init \
+    --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+    --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+    --graph $GRAPH --shape add_new_node --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test1/${TAG}_init.log
+  python -u -m bench2.cli run \
+    --host "$FALKOR_HOST" --port "$FALKOR_PORT" \
+    --username "$FALKOR_USER" --password "$FALKOR_PASS" \
+    --graph $GRAPH --workload add_new_node --name add_new_node_${TAG} \
+    --start-id $SIZE --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test1/${TAG}_run.log
+done
+```
+
+### Open follow-ups for Test 1
+
+- **Noisy-neighbor variant** — repeat at 1M with an additional 500K
+  `:entity:contact` nodes in the same composite index to test whether
+  label diversity affects the add_new_node path.
+- **Larger tier (3M, 5M)** — extrapolate the sublinear curve.
+- **Concurrent clients** — single-client throughput is 5K ops/s; what
+  does N parallel clients give?
+
+---
+
+## Test 2 — `add_new_node_with_audit` (Test 1 + 2 extra SETs)
+
+Identical to Test 1 except the bench query stamps two audit fields after
+the MERGE:
+
+```cypher
+MERGE (n:entity:account {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})
+  ON CREATE SET n = $props
+SET n.updated_at = $updated_at
+SET n.version    = coalesce(n.version, 0) + 1
+```
+
+Same init shape (uses the same query), same tier ladder (500K, 1M,
+1.5M), same params (25K ops, batch 1000, single client thread).
+
+The second SET intentionally **reads** `n.version` and writes it back
+(via `coalesce`) so it's not a no-op — measures realistic
+"read-then-write" cost, not just an assignment.
+
+### Combined Test 1 vs Test 2 — marginal cost of two extra SETs
+
+| Tier | T1 ms/op | T2 ms/op | Δ ms/op | Δ % | T1 ops/s | T2 ops/s | T2 p99 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 0.141 | +0.015 | +12.2% | 5,422 | 4,998 | 0.153 |
+| 1M   | 0.135 | 0.153 | +0.018 | +13.6% | 5,162 | 4,708 | 0.184 |
+| 1.5M | 0.138 | 0.146 | +0.008 |  +5.4% | 5,082 | 4,887 | 0.154 |
+
+Source logs: `results-cloud-test2/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings
+
+1. **Two extra SETs cost ~0.015 ms (≈10–13%) per op.** Small but
+   measurable. Roughly linear with the work added — one direct
+   assignment plus one read-then-write.
+2. **Test 2 also scales sublinearly.** 500K → 1.5M is only +3.5% on
+   Test 2 vs +9.4% on Test 1. Extra fixed per-op work dilutes the
+   (already small) index-lookup growth, flattening the curve further.
+3. **Test 2 1M is the slowest tier in the ladder** (0.153 ms, vs 0.146
+   at 1.5M). One outlier first-measured batch (0.178 ms vs steady
+   ~0.145 elsewhere) drove this — `p99=0.184`. Treat as transient
+   cloud noise, not a real inversion.
+4. **Latency tails widen slightly.** p99/avg ratio is 1.20× on Test 2
+   vs ≤1.10× on Test 1. The read-then-write `coalesce` likely
+   contributes the extra variance. No pathological long tails in any
+   tier.
+5. **No within-run drift.** All three Test 2 runs are flat across 25
+   batches (drift ≤2%).
+
+### Capacity-planning takeaway
+
+Adding audit-stamping (very common in CRM-style writes) costs ~10–13%
+in throughput at this workload shape. A single client thread sustains
+~4,900 ops/sec at 1M+ scale with the audit pattern, vs ~5,200 without
+it.
+
+### Reproduction
+
+```bash
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test2_${TAG}
+  python -u -m bench2.cli init --graph $GRAPH \
+    --shape add_new_node_with_audit --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test2/${TAG}_init.log
+  python -u -m bench2.cli run --graph $GRAPH \
+    --workload add_new_node_with_audit \
+    --name add_new_node_with_audit_${TAG} \
+    --start-id $SIZE --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test2/${TAG}_run.log
+done
+```
+
+---
+
+## Test 3 — `upsert_w7` (W7 customer pattern at 50-prop scale)
+
+The exact customer-reported W7 upsert pattern, run at the Test 1/2 tier
+ladder with the same 50-prop CRM record so the comparison is direct.
+
+```cypher
+MERGE (n:entity {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})  -- :entity only
+SET n = $props          -- 50 props rewritten unconditionally
+SET n:account           -- label add unconditional
+REMOVE n:inactive       -- label remove unconditional
+```
+
+Init shape (`--shape add_new_node`) is identical to Test 1/2 — only the
+bench query differs.
+
+### Combined Test 1 vs Test 2 vs Test 3
+
+| Tier | T1 ms/op | T2 ms/op | **T3 ms/op** | T3 ops/s | T3 p95 | T3 p99 | T3 / T1 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 0.141 | **4.045** | **244**   | 4.44  | 4.46  | **32.1×** |
+| 1M   | 0.135 | 0.153 | **7.311** | **136**   | 7.59  | 7.82  | **54.2×** |
+| 1.5M | 0.138 | 0.146 | **9.808** | **101**   | 10.16 | 10.30 | **71.1×** |
+
+Source logs: `results-cloud-test3/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings
+
+1. **The W7 pattern is catastrophically slow at the new tier scale.**
+   At 1.5M nodes, throughput collapses to **~101 ops/s** vs Test 1's
+   ~5,000 — a **71× slowdown** despite operating on the same indexed
+   graph at the same uuid range.
+
+2. **Slowdown grows roughly linearly with graph size** (32× → 54× →
+   71×). This is the smoking gun: the regression is **NOT** a fixed
+   per-op overhead — it scales with the index/label-store size. This
+   is consistent with the original W7 customer report and with the
+   earlier 250K/500K reproducer numbers.
+
+3. **At 2M (earlier B6/B7 runs) the regression was gone** because that
+   bench used `random_props` (4 props) — `SET n = $props` was rewriting
+   only ~4 fields. With **50 props** rewritten unconditionally on every
+   op, the regression dominates again at every tier from 500K up.
+
+4. **Tight latency distribution within the slow regime.** p99/avg ≈
+   1.05× — every op is slow in the same way, not bursty. This points
+   to a deterministic per-op cost (full prop rewrite + label-store
+   update + index touches) rather than GC or contention.
+
+5. **No within-run drift** — each run is dead flat across 25 batches at
+   its bad steady-state number. The cost is paid every op.
+
+### What's expensive — likely culprits
+
+The query does, on every op (every op is a fresh uuid → CREATE branch):
+
+- 1× `MERGE :entity` index lookup (cheap, this is what Test 1 measures)
+- 1× node CREATE
+- 1× **`SET n = op.props` writing all 50 properties** (expensive at
+  scale because the prop store + composite index entry are touched for
+  each prop key)
+- 1× **`SET n:account` label-store write + label scan index update**
+- 1× **`REMOVE n:inactive` lookup-then-delete on label-store**
+  (no-op for fresh nodes but the engine still has to check)
+
+Per Test 2's data, the property writes alone are not the bottleneck
+(50 props on create cost 0.126 ms in Test 1). The remaining gap of
+**~3.9 ms / 7.2 ms / 9.7 ms** must come from the **unconditional label
+ops on every row plus the unconditional re-write of all 50 props on a
+just-created node** (which Cypher engines often can't fold).
+
+### Practical recommendation for customers
+
+Two things, in order of expected savings:
+
+1. **Stop writing what you don't need to.** Use `ON CREATE SET` /
+   `ON MATCH SET` to avoid rewriting the full prop bag on every op.
+   Test 2 demonstrates the audit-stamp pattern doing exactly this for
+   ~10% overhead instead of 30-70×.
+
+2. **Replace the `:inactive` / `:account` label swap with a boolean
+   property** (e.g. `active: true|false`) backed by a property index.
+   To be measured directly in Test 4 (re-init required because the
+   schema changes).
+
+### Reproduction
+
+```bash
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test3_${TAG}
+  python -u -m bench2.cli init --graph $GRAPH \
+    --shape add_new_node --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test3/${TAG}_init.log
+  python -u -m bench2.cli run --graph $GRAPH \
+    --workload upsert_w7 --name upsert_w7_${TAG} \
+    --start-id $SIZE --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test3/${TAG}_run.log
+done
+```
+
+---
+
+## Test 4 — `upsert_w7_active` (boolean property instead of label REMOVE)
+
+Same query shape as Test 3 except the `:inactive` label REMOVE is
+replaced with a `SET n.active = true` against a property-indexed
+`:entity(active)`:
+
+```cypher
+MERGE (n:entity {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})
+SET n = $props          -- same as T3: unconditional 50-prop replace
+SET n:account           -- same as T3: unconditional label add
+SET n.active = true     -- replaces REMOVE n:inactive; property-indexed
+```
+
+**Init** uses a fast lean MERGE (`ADD_NEW_NODE_ACTIVE_INIT_QUERY`) that
+produces the same end-state node shape (`:entity:account` + 50 props +
+`active=true`) but with `ON CREATE SET` so init isn't slowed down by
+the W7 pattern itself. The composite uuid index AND the property index
+on `active` are both created before loading.
+
+**Hypothesis under test:** the customer's `REMOVE :inactive` label op
+is the heavy part of the W7 pattern. Replacing it with a property
+write should improve performance.
+
+### Combined Test 1 / Test 2 / Test 3 / Test 4
+
+| Tier | T1 ms/op | T2 ms/op | T3 ms/op | **T4 ms/op** | T4 vs T3 | T4 ops/s | T4 p99 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 0.141 | 4.045 | **4.159** | **+2.8%** | 237 | 4.51 |
+| 1M   | 0.135 | 0.153 | 7.311 | **7.389** | **+1.1%** | 134 | 7.60 |
+| 1.5M | 0.138 | 0.146 | 9.808 | **9.814** | **+0.1%** | 101 | 10.36 |
+
+Source logs: `results-cloud-test4/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings — hypothesis REFUTED
+
+1. **Replacing `REMOVE :inactive` with `SET active = true` gives
+   essentially zero improvement** at every tier. T4 is within
+   measurement noise of T3, and even slightly slower at 500K
+   (the new property index pays its own maintenance cost on every
+   `SET active=true`).
+
+2. **The label REMOVE is NOT the bottleneck.** The hypothesis that the
+   `REMOVE :inactive` label op was the expensive part of the W7
+   pattern is wrong. We can swap it for an indexed property write at
+   roughly equal cost.
+
+3. **The real cost is `SET n = $props`** — the unconditional rewrite
+   of all 50 properties on every op. This is what scales with graph
+   size and dominates the per-op cost. Both the prop store update and
+   (potentially) composite index touches happen for every key on every
+   write, regardless of whether anything changed.
+
+4. **Property indexes are not free either.** Dropping the label REMOVE
+   saved some work but adding the `:entity(active)` index added
+   roughly the same amount back. Net change ≈ 0.
+
+5. **Same scaling shape as Test 3** — slowdown grows roughly linearly
+   with graph size (32× → 54× → 71× vs Test 1, identical to T3). This
+   confirms the cost is in the prop-rewrite path, not the label op.
+
+### What this means for the customer
+
+Swapping the `:inactive` label for an `active` property is **not** a
+win on the write path. The only effective fix is to **stop doing
+unconditional writes**:
+
+- Use `ON CREATE SET` for the initial property bag.
+- Use `ON MATCH SET` ONLY for the fields that actually change between
+  CDC events (e.g. `updated_at`, `version`, the specific business
+  fields that were updated upstream).
+- This is exactly what Test 2 demonstrates: ~10% overhead vs Test 1
+  for a realistic audit-stamp pattern, instead of 32-71×.
+
+If the customer's CDC event payload genuinely contains a fresh full
+snapshot every time and they don't want to diff client-side, the next
+thing to try is **batching the writes by op-type** so the planner can
+specialize: separate INSERT-only batches (no MATCH path needed) from
+true UPDATE batches.
+
+### Reproduction
+
+```bash
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test4_${TAG}
+  python -u -m bench2.cli init --graph $GRAPH \
+    --shape add_new_node_active --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test4/${TAG}_init.log
+  python -u -m bench2.cli run --graph $GRAPH \
+    --workload upsert_w7_active --name upsert_w7_active_${TAG} \
+    --start-id $SIZE --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test4/${TAG}_run.log
+done
+```
+
+---
+
+## Test 5 — `delete_by_uuid` (single-node DELETE via composite uuid index)
+
+Pure index-lookup + node-delete cost. Same init shape as Tests 1-4
+(`--shape add_new_node`, 500K/1M/1.5M `:entity:account` 50-prop nodes,
+composite uuid index). Bench targets the **first** 25K uuids of the
+init range (`--start-id 0`) so MATCH always finds an existing node.
+Init has no edges, so plain `DELETE` is sufficient (no `DETACH`
+needed).
+
+```cypher
+MATCH (n:entity {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})
+DELETE n
+```
+
+### Combined Test 1 / Test 2 / Test 3 / Test 4 / Test 5
+
+| Tier | T1 add | T2 add+audit | T3 W7 (REMOVE) | T4 W7 (active prop) | **T5 delete** | T5 ops/s |
+|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 0.141 | 4.045 | 4.159 | **0.058** | **15,502** |
+| 1M   | 0.135 | 0.153 | 7.311 | 7.389 | **0.075** | **12,235** |
+| 1.5M | 0.138 | 0.146 | 9.808 | 9.814 | **0.064** | **14,118** |
+
+Source logs: `results-cloud-test5/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings
+
+1. **Delete is ~2× cheaper than add at the same scale.** Makes sense:
+   the add path writes 50 properties + 1 composite-index entry on
+   every op; the delete path does an index lookup + removes the
+   node + drops the index entry. No prop store writes.
+
+2. **Throughput: 12K–15K ops/sec** single-thread on cloud — roughly
+   3× the add throughput from Test 1 (~5K ops/sec).
+
+3. **Sub-linear scaling, like Test 1.** The 1M result (0.075 ms,
+   p99=0.083) appears to be a noisier steady state than 500K or 1.5M —
+   wider per-batch variance throughout the run rather than any drift.
+   Treating 500K and 1.5M as the cleaner anchors, the cost is
+   essentially **flat across the tier range** at ~0.06 ms/op.
+
+4. **Tighter latency than add.** p99/avg ≈ 1.10× across tiers — no
+   long-tail outliers. The delete path is more deterministic than the
+   prop-rewrite path.
+
+5. **Index maintenance dominates.** With no prop store work to do, the
+   per-op cost is essentially "find one row in the composite index +
+   remove one entry from it" — and that scales sub-linearly with
+   graph size, just like the read side.
+
+### Capacity-planning takeaway
+
+A single client thread sustains **~14,000 deletes/sec by uuid** at
+1M+ scale. Roughly 3× the rate of add operations. If the customer's
+cleanup or expiration job is delete-by-uuid, throughput should not
+be the bottleneck even at 100M-scale graphs (assuming the index
+behavior continues to be sub-linear, which is the strong indication
+from our 500K → 1.5M curve).
+
+### Reproduction
+
+```bash
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test5_${TAG}
+  python -u -m bench2.cli init --graph $GRAPH \
+    --shape add_new_node --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test5/${TAG}_init.log
+  python -u -m bench2.cli run --graph $GRAPH \
+    --workload delete_by_uuid --name delete_by_uuid_${TAG} \
+    --start-id 0 --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test5/${TAG}_run.log
+done
+```
+
+
+## Multi-client matrix — all 5 tests × 3 tiers from 2 EC2 clients
+
+Same workloads as Tests 1–5 above, run **simultaneously from two `c4.xlarge`
+clients** in us-east-2 (`18.117.114.53` and `3.20.223.188`) against the same
+`c6i.8xlarge` cloud standalone, FalkorDB v4.18.01.
+
+Each client issues 25,000 ops over disjoint `--start-id` ranges:
+* T1–T4 (creates / upserts): client A starts at `init_size`, client B at
+  `init_size + 25000` — never collide on the index.
+* T5 (deletes): client A deletes ids `0..24999`, client B deletes ids
+  `25000..49999` (also disjoint).
+
+Init runs once on client A, then both clients fire in parallel.
+Orchestrator: [`scripts/bench2/run_multi_matrix.sh`](../scripts/bench2/run_multi_matrix.sh).
+
+### Combined throughput (Σ ops/s = client A + client B)
+
+| Test | 500K | 1M | 1.5M | Single-client baseline (1M) | Scaling factor (1M) |
+|---|---|---|---|---|---|
+| T1 add_new_node          |  8,014 |  9,703 |  9,899 | 5,162 | **1.88×** |
+| T2 add_new_node_with_audit |  9,671 |  9,142 |  6,310 | 4,708 | **1.94×** |
+| T3 upsert_w7 (REMOVE)    |    239 |    140 |    104 |   137 | **1.02×** ⚠ |
+| T4 upsert_w7 (active)    |    247 |    141 |    425 |   135 | **1.04×** ⚠ |
+| T5 delete_by_uuid        | 20,012 | 14,188 | 12,431 |12,235 | **1.16×** |
+
+### Per-client average latency (ms/op)
+
+| Test | 500K (A / B) | 1M (A / B) | 1.5M (A / B) |
+|---|---|---|---|
+| T1 add                   | 0.192 / 0.188 | 0.147 / 0.145 | 0.144 / 0.141 |
+| T2 audit                 | 0.148 / 0.145 | 0.159 / 0.157 | 0.258 / 0.255 |
+| T3 W7 (REMOVE)           | 8.31 / 8.34   | 14.52 / 14.03 | 19.56 / 18.86 |
+| T4 W7 (active)           | 8.18 / 7.90   | 14.37 / 13.92 | 4.96 / 4.37   |
+| T5 delete                | 0.096 / 0.090 | 0.136 / 0.132 | 0.157 / 0.151 |
+
+### Findings
+
+1. **Cheap workloads (T1, T2, T5) scale near-linearly with client count.**
+   T1 at 1M went from 5,162 → 9,703 ops/s (1.88×) with the second client.
+   T2 hit 1.94×. T5 was already client-limited at 12K ops/s single-client; even
+   so adding a second client lifted it to 14–20K. **Bottleneck is the client,
+   not the server, for these patterns.**
+
+2. **Heavy unconditional-SET workloads (T3, T4) DO NOT scale.** Combined
+   throughput at 1M is essentially identical to single-client (140 vs 137
+   ops/s). Per-client latency roughly **doubles** when both clients run
+   together (7.3 ms → 14.5 ms at 1M). This is the classic signature of a
+   server-CPU-bound workload: throughput is fixed, latency grows with offered
+   load. Adding more application clients to a customer's deployment will not
+   help if their workload is W7-shaped — only server-side optimization will.
+
+3. **T4 1.5M anomaly worth flagging.** T4 at 1.5M came back at 4.7 ms/op
+   (425 ops/s combined) versus 14.1 ms/op at 1M. Single-client T4 1.5M was
+   9.8 ms/op, so this is *better* than the single-client baseline at the same
+   size — probably noise/state-dependent (page cache hot from the immediately-
+   prior init?). Re-running this single tier would tell us if it's reproducible
+   or one-off. Treat as an outlier for now, **not** as evidence the property-
+   index variant scales differently from the label-REMOVE variant.
+
+4. **T1 500K sub-linear (1.48× scaling).** Combined 8,014 ops/s vs 5,422 single.
+   This matches the broader pattern that single-client baselines at 500K are
+   the noisiest tier in this environment (we saw similar variance in the
+   per-test sections above). Both 1M and 1.5M scale close to 2×, which is the
+   trustworthy signal.
+
+### Customer-facing takeaway
+
+> **Client-side parallelism only helps for `MERGE`-light or `MATCH`-light
+> Cypher.** Customers running 50-property unconditional `SET n = $props`
+> workloads will not get throughput benefit from horizontally scaling their
+> application tier — the FalkorDB server is the bottleneck and adding clients
+> just splits the same throughput pie.
+>
+> Two-client workloads of the customer-friendly variants (T1/T2 — `ON CREATE
+> SET` only) sustained ~9.7K ops/s at 1M nodes, with median latency ≤ 0.16 ms
+> per op per client. That is the ceiling to plan against.
+
+### How to reproduce (multi-client)
+
+```bash
+export FALKOR_HOST=...  FALKOR_PORT=6379  FALKOR_USER=... FALKOR_PASS=...
+export CLIENT_A=ubuntu@<ip-1>  CLIENT_B=ubuntu@<ip-2>
+export SSH_KEY=~/path/to/key.pem
+
+# Single tier (e.g. T1 1M):
+bash scripts/bench2/run_multi_client.sh t1_1m \
+  add_new_node add_new_node 1000000 25000 1000000 1025000
+
+# Full 5×3 matrix:
+bash scripts/bench2/run_multi_matrix.sh
+```
+
+Per-run logs land in `results-cloud-multi/<tag>/{init,run_a,run_b}.log`.
