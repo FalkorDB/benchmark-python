@@ -1,0 +1,19 @@
+[run] pre: 1,500,000 nodes / 0 edges  (graph=multi_t2_1_5m, workload=add_new_node_with_audit)
+[bench:add_new_node_with_audit_t2_1_5m_A] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 1 (warmup) batch_total=151.5 ms per_op=0.152 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 2 (warmup) batch_total=189.8 ms per_op=0.190 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 3 (warmup) batch_total=146.0 ms per_op=0.146 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 4 (warmup) batch_total=145.6 ms per_op=0.146 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 5 (warmup) batch_total=170.1 ms per_op=0.170 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 6 (warmup) batch_total=147.0 ms per_op=0.147 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 7 (warmup) batch_total=146.3 ms per_op=0.146 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 8 (warmup) batch_total=153.8 ms per_op=0.154 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 9 (warmup) batch_total=145.9 ms per_op=0.146 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 10 (warmup) batch_total=151.4 ms per_op=0.151 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 11 (measured) batch_total=154.0 ms per_op=0.154 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 12 (measured) batch_total=151.9 ms per_op=0.152 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 13 (measured) batch_total=170.5 ms per_op=0.170 ms
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 15 avg(last5)=0.275 ms/op
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 20 avg(last5)=0.344 ms/op
+[bench:add_new_node_with_audit_t2_1_5m_A]   batch 25 avg(last5)=0.154 ms/op
+[run] add_new_node_with_audit_t2_1_5m_A: 3,154 ops/s  avg=0.2577 ms/op  p95=0.7348  p99=0.8370

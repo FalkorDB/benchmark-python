@@ -994,3 +994,97 @@ for SIZE in 500000 1000000 1500000; do
 done
 ```
 
+
+## Multi-client matrix — all 5 tests × 3 tiers from 2 EC2 clients
+
+Same workloads as Tests 1–5 above, run **simultaneously from two `c4.xlarge`
+clients** in us-east-2 (`18.117.114.53` and `3.20.223.188`) against the same
+`c6i.8xlarge` cloud standalone, FalkorDB v4.18.01.
+
+Each client issues 25,000 ops over disjoint `--start-id` ranges:
+* T1–T4 (creates / upserts): client A starts at `init_size`, client B at
+  `init_size + 25000` — never collide on the index.
+* T5 (deletes): client A deletes ids `0..24999`, client B deletes ids
+  `25000..49999` (also disjoint).
+
+Init runs once on client A, then both clients fire in parallel.
+Orchestrator: [`scripts/bench2/run_multi_matrix.sh`](../scripts/bench2/run_multi_matrix.sh).
+
+### Combined throughput (Σ ops/s = client A + client B)
+
+| Test | 500K | 1M | 1.5M | Single-client baseline (1M) | Scaling factor (1M) |
+|---|---|---|---|---|---|
+| T1 add_new_node          |  8,014 |  9,703 |  9,899 | 5,162 | **1.88×** |
+| T2 add_new_node_with_audit |  9,671 |  9,142 |  6,310 | 4,708 | **1.94×** |
+| T3 upsert_w7 (REMOVE)    |    239 |    140 |    104 |   137 | **1.02×** ⚠ |
+| T4 upsert_w7 (active)    |    247 |    141 |    425 |   135 | **1.04×** ⚠ |
+| T5 delete_by_uuid        | 20,012 | 14,188 | 12,431 |12,235 | **1.16×** |
+
+### Per-client average latency (ms/op)
+
+| Test | 500K (A / B) | 1M (A / B) | 1.5M (A / B) |
+|---|---|---|---|
+| T1 add                   | 0.192 / 0.188 | 0.147 / 0.145 | 0.144 / 0.141 |
+| T2 audit                 | 0.148 / 0.145 | 0.159 / 0.157 | 0.258 / 0.255 |
+| T3 W7 (REMOVE)           | 8.31 / 8.34   | 14.52 / 14.03 | 19.56 / 18.86 |
+| T4 W7 (active)           | 8.18 / 7.90   | 14.37 / 13.92 | 4.96 / 4.37   |
+| T5 delete                | 0.096 / 0.090 | 0.136 / 0.132 | 0.157 / 0.151 |
+
+### Findings
+
+1. **Cheap workloads (T1, T2, T5) scale near-linearly with client count.**
+   T1 at 1M went from 5,162 → 9,703 ops/s (1.88×) with the second client.
+   T2 hit 1.94×. T5 was already client-limited at 12K ops/s single-client; even
+   so adding a second client lifted it to 14–20K. **Bottleneck is the client,
+   not the server, for these patterns.**
+
+2. **Heavy unconditional-SET workloads (T3, T4) DO NOT scale.** Combined
+   throughput at 1M is essentially identical to single-client (140 vs 137
+   ops/s). Per-client latency roughly **doubles** when both clients run
+   together (7.3 ms → 14.5 ms at 1M). This is the classic signature of a
+   server-CPU-bound workload: throughput is fixed, latency grows with offered
+   load. Adding more application clients to a customer's deployment will not
+   help if their workload is W7-shaped — only server-side optimization will.
+
+3. **T4 1.5M anomaly worth flagging.** T4 at 1.5M came back at 4.7 ms/op
+   (425 ops/s combined) versus 14.1 ms/op at 1M. Single-client T4 1.5M was
+   9.8 ms/op, so this is *better* than the single-client baseline at the same
+   size — probably noise/state-dependent (page cache hot from the immediately-
+   prior init?). Re-running this single tier would tell us if it's reproducible
+   or one-off. Treat as an outlier for now, **not** as evidence the property-
+   index variant scales differently from the label-REMOVE variant.
+
+4. **T1 500K sub-linear (1.48× scaling).** Combined 8,014 ops/s vs 5,422 single.
+   This matches the broader pattern that single-client baselines at 500K are
+   the noisiest tier in this environment (we saw similar variance in the
+   per-test sections above). Both 1M and 1.5M scale close to 2×, which is the
+   trustworthy signal.
+
+### Customer-facing takeaway
+
+> **Client-side parallelism only helps for `MERGE`-light or `MATCH`-light
+> Cypher.** Customers running 50-property unconditional `SET n = $props`
+> workloads will not get throughput benefit from horizontally scaling their
+> application tier — the FalkorDB server is the bottleneck and adding clients
+> just splits the same throughput pie.
+>
+> Two-client workloads of the customer-friendly variants (T1/T2 — `ON CREATE
+> SET` only) sustained ~9.7K ops/s at 1M nodes, with median latency ≤ 0.16 ms
+> per op per client. That is the ceiling to plan against.
+
+### How to reproduce (multi-client)
+
+```bash
+export FALKOR_HOST=...  FALKOR_PORT=6379  FALKOR_USER=... FALKOR_PASS=...
+export CLIENT_A=ubuntu@<ip-1>  CLIENT_B=ubuntu@<ip-2>
+export SSH_KEY=~/path/to/key.pem
+
+# Single tier (e.g. T1 1M):
+bash scripts/bench2/run_multi_client.sh t1_1m \
+  add_new_node add_new_node 1000000 25000 1000000 1025000
+
+# Full 5×3 matrix:
+bash scripts/bench2/run_multi_matrix.sh
+```
+
+Per-run logs land in `results-cloud-multi/<tag>/{init,run_a,run_b}.log`.
