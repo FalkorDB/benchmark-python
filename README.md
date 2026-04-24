@@ -2,25 +2,27 @@
 
 A Python benchmark tool that measures **FalkorDB data population performance** across increasing graph sizes, with configurable batch sizes and multiple test variants.
 
-## 🔬 Latest finding — `:inactive` label vs `active` property: **identical cost** on the write path (cloud, v4.18.01)
+## 🔬 Latest finding — Tests 1–5 cloud write-path map (cloud, FalkorDB v4.18.01)
 
-*Same 50-prop CRM record, same 500K/1M/1.5M ladder. Test 3 = W7 customer pattern with `REMOVE n:inactive`. Test 4 = same pattern but `SET n.active = true` against an indexed `:entity(active)` property instead.*
+*Same 50-prop CRM record, same composite uuid index, same 500K/1M/1.5M ladder, single client thread.*
 
-| Tier | T1 lean | T2 +audit | **T3 W7 (REMOVE :inactive)** | **T4 W7 (SET active=true)** | T4 vs T3 |
+| Tier | T1 add | T2 add+audit | T3 W7 (REMOVE :inactive) | T4 W7 (SET active=true) | **T5 delete** |
 |---:|---:|---:|---:|---:|---:|
-| **500K** | 0.126 | 0.141 | **4.045** | **4.159** | **+2.8%** |
-| **1M**   | 0.135 | 0.153 | **7.311** | **7.389** | **+1.1%** |
-| **1.5M** | 0.138 | 0.146 | **9.808** | **9.814** | **+0.1%** |
+| **500K** | 0.126 | 0.141 | 4.045 | 4.159 | **0.058** |
+| **1M**   | 0.135 | 0.153 | 7.311 | 7.389 | **0.075** |
+| **1.5M** | 0.138 | 0.146 | 9.808 | 9.814 | **0.064** |
+| ops/s @ 1M | 5,162 | 4,708 | 136 | 134 | **12,235** |
 
-**Findings — hypothesis refuted:**
+**Headline takeaways:**
 
-- **Swapping the label REMOVE for an indexed boolean property gives essentially zero improvement.** T4 is within measurement noise of T3 at every tier. The new property index pays its own maintenance cost that roughly cancels the saving from dropping the REMOVE.
-- **The label REMOVE is NOT the bottleneck.** The expensive part of the W7 pattern is the unconditional `SET n = $props` (full 50-prop rewrite on every op). Both the prop store and the composite index entries get touched for every key on every write.
-- **Same scaling shape as Test 3** — slowdown grows linearly with graph size (32×→54×→71× vs Test 1).
+- **Delete by uuid is the fastest write op** — ~2× cheaper than add (no prop store writes), throughput ~12–15K ops/sec single-thread.
+- **Add (Test 1)** is a flat ~0.13 ms/op — sublinear scaling, ~5K ops/sec at 1M+.
+- **Audit-stamping (Test 2)** adds ~10% on top of add — cheap.
+- **Customer W7 pattern (Test 3)** collapses by 32–71× and **scales linearly with graph size**, because it rewrites all 50 props unconditionally on every op.
+- **Replacing `:inactive` label with `active` property (Test 4)** does NOT help — refutes the "label REMOVE is the heavy part" hypothesis. The unconditional `SET n = $props` is the actual cost driver.
+- **Recommendation:** for upserts, use `ON CREATE SET` / `ON MATCH SET` and write only what changed. Test 2 demonstrates this works at ~10% overhead vs 32–71× for unconditional rewrites.
 
-**Customer takeaway:** the `:inactive` → `active` property refactor will not help. The only effective fix is **stop doing unconditional writes** — use `ON CREATE SET` / `ON MATCH SET` and only write what actually changed (Test 2 shows this at ~10% overhead vs 32-71×).
-
-Full results, all four tests, per-batch drift: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
+Full results, methodology, per-batch drift, all 5 tests: [`info/bench2-results-cloud.md`](./info/bench2-results-cloud.md)
 
 ---
 

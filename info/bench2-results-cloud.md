@@ -914,3 +914,83 @@ for SIZE in 500000 1000000 1500000; do
 done
 ```
 
+---
+
+## Test 5 — `delete_by_uuid` (single-node DELETE via composite uuid index)
+
+Pure index-lookup + node-delete cost. Same init shape as Tests 1-4
+(`--shape add_new_node`, 500K/1M/1.5M `:entity:account` 50-prop nodes,
+composite uuid index). Bench targets the **first** 25K uuids of the
+init range (`--start-id 0`) so MATCH always finds an existing node.
+Init has no edges, so plain `DELETE` is sufficient (no `DETACH`
+needed).
+
+```cypher
+MATCH (n:entity {uuid_hi: $uuid_hi, uuid_lo: $uuid_lo})
+DELETE n
+```
+
+### Combined Test 1 / Test 2 / Test 3 / Test 4 / Test 5
+
+| Tier | T1 add | T2 add+audit | T3 W7 (REMOVE) | T4 W7 (active prop) | **T5 delete** | T5 ops/s |
+|---:|---:|---:|---:|---:|---:|---:|
+| 500K | 0.126 | 0.141 | 4.045 | 4.159 | **0.058** | **15,502** |
+| 1M   | 0.135 | 0.153 | 7.311 | 7.389 | **0.075** | **12,235** |
+| 1.5M | 0.138 | 0.146 | 9.808 | 9.814 | **0.064** | **14,118** |
+
+Source logs: `results-cloud-test5/{500k,1m,1_5m}_{init,run}.log`.
+
+### Findings
+
+1. **Delete is ~2× cheaper than add at the same scale.** Makes sense:
+   the add path writes 50 properties + 1 composite-index entry on
+   every op; the delete path does an index lookup + removes the
+   node + drops the index entry. No prop store writes.
+
+2. **Throughput: 12K–15K ops/sec** single-thread on cloud — roughly
+   3× the add throughput from Test 1 (~5K ops/sec).
+
+3. **Sub-linear scaling, like Test 1.** The 1M result (0.075 ms,
+   p99=0.083) appears to be a noisier steady state than 500K or 1.5M —
+   wider per-batch variance throughout the run rather than any drift.
+   Treating 500K and 1.5M as the cleaner anchors, the cost is
+   essentially **flat across the tier range** at ~0.06 ms/op.
+
+4. **Tighter latency than add.** p99/avg ≈ 1.10× across tiers — no
+   long-tail outliers. The delete path is more deterministic than the
+   prop-rewrite path.
+
+5. **Index maintenance dominates.** With no prop store work to do, the
+   per-op cost is essentially "find one row in the composite index +
+   remove one entry from it" — and that scales sub-linearly with
+   graph size, just like the read side.
+
+### Capacity-planning takeaway
+
+A single client thread sustains **~14,000 deletes/sec by uuid** at
+1M+ scale. Roughly 3× the rate of add operations. If the customer's
+cleanup or expiration job is delete-by-uuid, throughput should not
+be the bottleneck even at 100M-scale graphs (assuming the index
+behavior continues to be sub-linear, which is the strong indication
+from our 500K → 1.5M curve).
+
+### Reproduction
+
+```bash
+for SIZE in 500000 1000000 1500000; do
+  case $SIZE in
+    500000)  TAG=500k ;;
+    1000000) TAG=1m ;;
+    1500000) TAG=1_5m ;;
+  esac
+  GRAPH=test5_${TAG}
+  python -u -m bench2.cli init --graph $GRAPH \
+    --shape add_new_node --nodes $SIZE --batch-size 1000 \
+    2>&1 | tee results-cloud-test5/${TAG}_init.log
+  python -u -m bench2.cli run --graph $GRAPH \
+    --workload delete_by_uuid --name delete_by_uuid_${TAG} \
+    --start-id 0 --ops 25000 --batch-size 1000 --warmup-batches 10 \
+    2>&1 | tee results-cloud-test5/${TAG}_run.log
+done
+```
+
