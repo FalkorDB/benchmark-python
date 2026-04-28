@@ -1,0 +1,108 @@
+# single-client matrix 'ha_r6i_xl' started 2026-04-28T01:49:00Z
+# host=node-mz-0.instance-iok4ibin1.hc-2uaqqpjgg.us-east-2.aws.f2e0a955bb84.cloud tls=1 client=ubuntu@3.19.222.200
+
+
+########## t1_500k  (shape=add_new_node workload=add_new_node init=500000 start=500000) ##########
+graph=ha_r6i_xl_t1_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=ha_r6i_xl_t1_500k, workload=add_new_node)
+[run] add_new_node_t1_500k: 5,151 ops/s  avg=0.1333 ms/op  p95=0.1387  p99=0.1473
+[matrix] OK t1_500k
+
+########## t2_500k  (shape=add_new_node_with_audit workload=add_new_node_with_audit init=500000 start=500000) ##########
+graph=ha_r6i_xl_t2_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=ha_r6i_xl_t2_500k, workload=add_new_node_with_audit)
+[run] add_new_node_with_audit_t2_500k: 4,877 ops/s  avg=0.1434 ms/op  p95=0.1897  p99=0.1973
+[matrix] OK t2_500k
+
+########## t3_500k  (shape=add_new_node workload=upsert_w7 init=500000 start=500000) ##########
+graph=ha_r6i_xl_t3_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=ha_r6i_xl_t3_500k, workload=upsert_w7)
+[run] upsert_w7_t3_500k: 162 ops/s  avg=6.0989 ms/op  p95=6.7545  p99=6.8629
+[matrix] OK t3_500k
+
+########## t4_500k  (shape=add_new_node_active workload=upsert_w7_active init=500000 start=500000) ##########
+graph=ha_r6i_xl_t4_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=ha_r6i_xl_t4_500k, workload=upsert_w7_active)
+[run] upsert_w7_active_t4_500k: 200 ops/s  avg=4.9399 ms/op  p95=6.7824  p99=7.0543
+[matrix] OK t4_500k
+
+########## t5_500k  (shape=add_new_node workload=delete_by_uuid init=500000 start=0) ##########
+graph=ha_r6i_xl_t5_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=ha_r6i_xl_t5_500k, workload=delete_by_uuid)
+[run] delete_by_uuid_t5_500k: 16,028 ops/s  avg=0.0553 ms/op  p95=0.0607  p99=0.0618
+[matrix] OK t5_500k
+
+########## t1_1m  (shape=add_new_node workload=add_new_node init=1000000 start=1000000) ##########
+graph=ha_r6i_xl_t1_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=ha_r6i_xl_t1_1m, workload=add_new_node)
+[run] add_new_node_t1_1m: 4,896 ops/s  avg=0.1437 ms/op  p95=0.1447  p99=0.1548
+[matrix] OK t1_1m
+
+########## t2_1m  (shape=add_new_node_with_audit workload=add_new_node_with_audit init=1000000 start=1000000) ##########
+graph=ha_r6i_xl_t2_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=ha_r6i_xl_t2_1m, workload=add_new_node_with_audit)
+[run] add_new_node_with_audit_t2_1m: 4,802 ops/s  avg=0.1468 ms/op  p95=0.1535  p99=0.1614
+[matrix] OK t2_1m
+
+########## t3_1m  (shape=add_new_node workload=upsert_w7 init=1000000 start=1000000) ##########
+graph=ha_r6i_xl_t3_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=ha_r6i_xl_t3_1m, workload=upsert_w7)
+[run] upsert_w7_t3_1m: 69 ops/s  avg=14.3709 ms/op  p95=15.5769  p99=15.7745
+[matrix] OK t3_1m
+
+########## t4_1m  (shape=add_new_node_active workload=upsert_w7_active init=1000000 start=1000000) ##########
+graph=ha_r6i_xl_t4_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=ha_r6i_xl_t4_1m, workload=upsert_w7_active)
+[run] upsert_w7_active_t4_1m: 252 ops/s  avg=3.9044 ms/op  p95=13.9530  p99=14.4214
+[matrix] OK t4_1m
+
+########## t5_1m  (shape=add_new_node workload=delete_by_uuid init=1000000 start=0) ##########
+graph=ha_r6i_xl_t5_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=ha_r6i_xl_t5_1m, workload=delete_by_uuid)
+[run] delete_by_uuid_t5_1m: 15,525 ops/s  avg=0.0574 ms/op  p95=0.0696  p99=0.0713
+[matrix] OK t5_1m
+
+########## t1_1_5m  (shape=add_new_node workload=add_new_node init=1500000 start=1500000) ##########
+graph=ha_r6i_xl_t1_1_5m
+
+[run] pre: 1,500,000 nodes / 0 edges  (graph=ha_r6i_xl_t1_1_5m, workload=add_new_node)
+[run] add_new_node_t1_1_5m: 4,804 ops/s  avg=0.1477 ms/op  p95=0.1507  p99=0.1649
+[matrix] OK t1_1_5m
+
+########## t2_1_5m  (shape=add_new_node_with_audit workload=add_new_node_with_audit init=1500000 start=1500000) ##########
+graph=ha_r6i_xl_t2_1_5m
+
+[run] pre: 1,500,000 nodes / 0 edges  (graph=ha_r6i_xl_t2_1_5m, workload=add_new_node_with_audit)
+[run] add_new_node_with_audit_t2_1_5m: 4,266 ops/s  avg=0.1729 ms/op  p95=0.1988  p99=0.2342
+[matrix] OK t2_1_5m
+
+########## t3_1_5m  (shape=add_new_node workload=upsert_w7 init=1500000 start=1500000) ##########
+graph=ha_r6i_xl_t3_1_5m
+
+[run] pre: 1,500,000 nodes / 0 edges  (graph=ha_r6i_xl_t3_1_5m, workload=upsert_w7)
+[run] upsert_w7_t3_1_5m: 46 ops/s  avg=21.0110 ms/op  p95=22.2145  p99=22.3795
+[matrix] OK t3_1_5m
+
+########## t4_1_5m  (shape=add_new_node_active workload=upsert_w7_active init=1500000 start=1500000) ##########
+graph=ha_r6i_xl_t4_1_5m
+
+[matrix] FAIL init t4_1_5m
+
+########## t5_1_5m  (shape=add_new_node workload=delete_by_uuid init=1500000 start=0) ##########
+graph=ha_r6i_xl_t5_1_5m
+
+[run] pre: 0 nodes / 0 edges  (graph=ha_r6i_xl_t5_1_5m, workload=delete_by_uuid)
+[run] delete_by_uuid_t5_1_5m: 0 ops/s  avg=0.0000 ms/op  p95=0.0000  p99=0.0000
+[matrix] OK t5_1_5m
+
+# single-client matrix 'ha_r6i_xl' done in 67 min
