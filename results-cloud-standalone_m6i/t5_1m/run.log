@@ -1,0 +1,19 @@
+[run] pre: 1,000,000 nodes / 0 edges  (graph=standalone_m6i_t5_1m, workload=delete_by_uuid)
+[bench:delete_by_uuid_t5_1m] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:delete_by_uuid_t5_1m]   batch 1 (warmup) batch_total=147.6 ms per_op=0.148 ms
+[bench:delete_by_uuid_t5_1m]   batch 2 (warmup) batch_total=179.8 ms per_op=0.180 ms
+[bench:delete_by_uuid_t5_1m]   batch 3 (warmup) batch_total=57.5 ms per_op=0.057 ms
+[bench:delete_by_uuid_t5_1m]   batch 4 (warmup) batch_total=57.3 ms per_op=0.057 ms
+[bench:delete_by_uuid_t5_1m]   batch 5 (warmup) batch_total=57.4 ms per_op=0.057 ms
+[bench:delete_by_uuid_t5_1m]   batch 6 (warmup) batch_total=69.1 ms per_op=0.069 ms
+[bench:delete_by_uuid_t5_1m]   batch 7 (warmup) batch_total=91.0 ms per_op=0.091 ms
+[bench:delete_by_uuid_t5_1m]   batch 8 (warmup) batch_total=58.7 ms per_op=0.059 ms
+[bench:delete_by_uuid_t5_1m]   batch 9 (warmup) batch_total=66.5 ms per_op=0.066 ms
+[bench:delete_by_uuid_t5_1m]   batch 10 (warmup) batch_total=57.9 ms per_op=0.058 ms
+[bench:delete_by_uuid_t5_1m]   batch 11 (measured) batch_total=58.3 ms per_op=0.058 ms
+[bench:delete_by_uuid_t5_1m]   batch 12 (measured) batch_total=95.8 ms per_op=0.096 ms
+[bench:delete_by_uuid_t5_1m]   batch 13 (measured) batch_total=58.1 ms per_op=0.058 ms
+[bench:delete_by_uuid_t5_1m]   batch 15 avg(last5)=0.066 ms/op
+[bench:delete_by_uuid_t5_1m]   batch 20 avg(last5)=0.065 ms/op
+[bench:delete_by_uuid_t5_1m]   batch 25 avg(last5)=0.067 ms/op
+[run] delete_by_uuid_t5_1m: 13,694 ops/s  avg=0.0659 ms/op  p95=0.0877  p99=0.0958

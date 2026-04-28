@@ -1,0 +1,19 @@
+[run] pre: 1,500,000 nodes / 0 edges  (graph=standalone_m6i_2x_t1_1_5m, workload=add_new_node)
+[bench:add_new_node_t1_1_5m] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:add_new_node_t1_1_5m]   batch 1 (warmup) batch_total=152.8 ms per_op=0.153 ms
+[bench:add_new_node_t1_1_5m]   batch 2 (warmup) batch_total=147.5 ms per_op=0.147 ms
+[bench:add_new_node_t1_1_5m]   batch 3 (warmup) batch_total=144.3 ms per_op=0.144 ms
+[bench:add_new_node_t1_1_5m]   batch 4 (warmup) batch_total=144.6 ms per_op=0.145 ms
+[bench:add_new_node_t1_1_5m]   batch 5 (warmup) batch_total=143.3 ms per_op=0.143 ms
+[bench:add_new_node_t1_1_5m]   batch 6 (warmup) batch_total=145.9 ms per_op=0.146 ms
+[bench:add_new_node_t1_1_5m]   batch 7 (warmup) batch_total=147.6 ms per_op=0.148 ms
+[bench:add_new_node_t1_1_5m]   batch 8 (warmup) batch_total=155.8 ms per_op=0.156 ms
+[bench:add_new_node_t1_1_5m]   batch 9 (warmup) batch_total=142.9 ms per_op=0.143 ms
+[bench:add_new_node_t1_1_5m]   batch 10 (warmup) batch_total=146.7 ms per_op=0.147 ms
+[bench:add_new_node_t1_1_5m]   batch 11 (measured) batch_total=148.1 ms per_op=0.148 ms
+[bench:add_new_node_t1_1_5m]   batch 12 (measured) batch_total=145.8 ms per_op=0.146 ms
+[bench:add_new_node_t1_1_5m]   batch 13 (measured) batch_total=141.9 ms per_op=0.142 ms
+[bench:add_new_node_t1_1_5m]   batch 15 avg(last5)=0.146 ms/op
+[bench:add_new_node_t1_1_5m]   batch 20 avg(last5)=0.146 ms/op
+[bench:add_new_node_t1_1_5m]   batch 25 avg(last5)=0.148 ms/op
+[run] add_new_node_t1_1_5m: 4,816 ops/s  avg=0.1466 ms/op  p95=0.1490  p99=0.1583

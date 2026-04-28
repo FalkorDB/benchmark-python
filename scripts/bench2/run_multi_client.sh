@@ -34,6 +34,7 @@ OUT=./results-cloud-multi/${TAG}
 mkdir -p "$OUT"
 
 SSH="ssh -i $SSH_KEY -o StrictHostKeyChecking=no"
+TLS_FLAG="${FALKOR_TLS:+--tls}"
 REMOTE_ENV="export FALKOR_HOST=$FALKOR_HOST FALKOR_PORT=$FALKOR_PORT FALKOR_USER=$FALKOR_USER FALKOR_PASS=$FALKOR_PASS;"
 
 echo "================ ${TAG} ================"
@@ -44,7 +45,7 @@ echo
 
 echo "[init] on CLIENT_A ($CLIENT_A)..."
 $SSH "$CLIENT_A" "$REMOTE_ENV cd ~/benchmark-python && source .venv/bin/activate && \
-  python -u -m bench2.cli init --host \$FALKOR_HOST --port \$FALKOR_PORT \
+  python -u -m bench2.cli init --host \$FALKOR_HOST --port \$FALKOR_PORT $TLS_FLAG \
     --username \$FALKOR_USER --password \$FALKOR_PASS \
     --graph $GRAPH --shape $SHAPE --nodes $INIT_SIZE --batch-size 1000" \
   2>&1 | tee "$OUT/init.log"
@@ -55,7 +56,7 @@ echo "[bench] firing both clients in parallel..."
 run_client() {
   local host=$1; local label=$2; local start=$3; local logfile=$4
   $SSH "$host" "$REMOTE_ENV cd ~/benchmark-python && source .venv/bin/activate && \
-    python -u -m bench2.cli run --host \$FALKOR_HOST --port \$FALKOR_PORT \
+    python -u -m bench2.cli run --host \$FALKOR_HOST --port \$FALKOR_PORT $TLS_FLAG \
       --username \$FALKOR_USER --password \$FALKOR_PASS \
       --graph $GRAPH --workload $WORKLOAD --name ${WORKLOAD}_${TAG}_${label} \
       --start-id $start --ops $OPS --batch-size 1000 --warmup-batches 10" \

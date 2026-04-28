@@ -19,8 +19,10 @@ def main() -> None:
     """bench2 — index-impact micro-benchmark."""
 
 
-def _client(host: str, port: int, graph: str, username: str | None, password: str | None) -> BenchmarkClient:
-    return BenchmarkClient(host=host, port=port, graph_name=graph, username=username, password=password)
+def _client(host: str, port: int, graph: str, username: str | None, password: str | None,
+            tls: bool = False) -> BenchmarkClient:
+    return BenchmarkClient(host=host, port=port, graph_name=graph,
+                           username=username, password=password, tls=tls)
 
 
 @main.command("init")
@@ -28,6 +30,8 @@ def _client(host: str, port: int, graph: str, username: str | None, password: st
 @click.option("--port", default=6379, show_default=True, type=int)
 @click.option("--username", default=None)
 @click.option("--password", default=None)
+@click.option("--tls/--no-tls", default=False, show_default=True,
+              help="Use TLS (required for FalkorDB Cloud instances with TLS enabled).")
 @click.option("--graph", required=True, help="Target graph name (will be DROPPED).")
 @click.option("--indexed/--no-index", default=True, show_default=True,
               help="Create composite uuid index BEFORE loading.")
@@ -45,9 +49,9 @@ def _client(host: str, port: int, graph: str, username: str | None, password: st
                    "add_new_node_with_audit = Test 2 init: same as Test 1 plus updated_at/version SETs; "
                    "add_new_node_active = Test 4 init: same as Test 1 plus active=true property and "
                    "an index on :entity(active).")
-def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, extra_contacts, shape) -> None:
+def init_cmd(host, port, username, password, tls, graph, indexed, nodes, batch_size, extra_contacts, shape) -> None:
     """Drop the graph and load the baseline."""
-    client = _client(host, port, graph, username, password)
+    client = _client(host, port, graph, username, password, tls=tls)
     if shape in ("add_new_node", "add_new_node_with_audit", "add_new_node_active"):
         if extra_contacts:
             raise click.UsageError(f"--extra-contacts is only supported with --shape pair")
@@ -67,6 +71,8 @@ def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, 
 @click.option("--port", default=6379, show_default=True, type=int)
 @click.option("--username", default=None)
 @click.option("--password", default=None)
+@click.option("--tls/--no-tls", default=False, show_default=True,
+              help="Use TLS (required for FalkorDB Cloud instances with TLS enabled).")
 @click.option("--graph", required=True)
 @click.option("--name", required=True, help="Label for this run (e.g. merge_pair_indexed).")
 @click.option("--indexed/--no-index", default=True, show_default=True,
@@ -90,9 +96,9 @@ def init_cmd(host, port, username, password, graph, indexed, nodes, batch_size, 
                    "upsert_w7_active = Test 4 same as upsert_w7 but uses SET n.active=true "
                    "instead of REMOVE n:inactive; "
                    "delete_by_uuid = Test 5 MATCH-by-uuid + DELETE single node.")
-def run_cmd(host, port, username, password, graph, name, indexed, start_id, ops, batch_size, warmup_batches, workload) -> None:
+def run_cmd(host, port, username, password, tls, graph, name, indexed, start_id, ops, batch_size, warmup_batches, workload) -> None:
     """Run the measured benchmark against an existing init graph."""
-    client = _client(host, port, graph, username, password)
+    client = _client(host, port, graph, username, password, tls=tls)
     pre_n, pre_e = client.graph_size()
     click.echo(f"[run] pre: {pre_n:,} nodes / {pre_e:,} edges  (graph={graph}, workload={workload})")
     extra = {}

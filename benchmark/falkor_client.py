@@ -25,6 +25,7 @@ class BenchmarkClient:
         graph_name: str = "benchmark",
         username: str | None = None,
         password: str | None = None,
+        tls: bool = False,
     ) -> None:
         from falkordb import FalkorDB
 
@@ -33,6 +34,8 @@ class BenchmarkClient:
             kwargs["username"] = username
         if password:
             kwargs["password"] = password
+        if tls:
+            kwargs["ssl"] = True
         self._db = FalkorDB(**kwargs)
         self._graph_name = graph_name
         self._graph = self._db.select_graph(graph_name)
