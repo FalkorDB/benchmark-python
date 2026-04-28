@@ -1,0 +1,108 @@
+# single-client matrix 'standalone_m6i' started 2026-04-27T15:02:13Z
+# host=r-ercqm6xbqm.instance-m3eb7h7tx.hc-2uaqqpjgg.us-east-2.aws.f2e0a955bb84.cloud tls=1 client=ubuntu@3.19.222.200
+
+
+########## t1_500k  (shape=add_new_node workload=add_new_node init=500000 start=500000) ##########
+graph=standalone_m6i_t1_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=standalone_m6i_t1_500k, workload=add_new_node)
+[run] add_new_node_t1_500k: 4,615 ops/s  avg=0.1554 ms/op  p95=0.2208  p99=0.2385
+[matrix] OK t1_500k
+
+########## t2_500k  (shape=add_new_node_with_audit workload=add_new_node_with_audit init=500000 start=500000) ##########
+graph=standalone_m6i_t2_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=standalone_m6i_t2_500k, workload=add_new_node_with_audit)
+[run] add_new_node_with_audit_t2_500k: 4,914 ops/s  avg=0.1416 ms/op  p95=0.1465  p99=0.1569
+[matrix] OK t2_500k
+
+########## t3_500k  (shape=add_new_node workload=upsert_w7 init=500000 start=500000) ##########
+graph=standalone_m6i_t3_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=standalone_m6i_t3_500k, workload=upsert_w7)
+[run] upsert_w7_t3_500k: 92 ops/s  avg=10.8559 ms/op  p95=11.4597  p99=11.5061
+[matrix] OK t3_500k
+
+########## t4_500k  (shape=add_new_node_active workload=upsert_w7_active init=500000 start=500000) ##########
+graph=standalone_m6i_t4_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=standalone_m6i_t4_500k, workload=upsert_w7_active)
+[run] upsert_w7_active_t4_500k: 409 ops/s  avg=2.3843 ms/op  p95=10.4629  p99=11.0467
+[matrix] OK t4_500k
+
+########## t5_500k  (shape=add_new_node workload=delete_by_uuid init=500000 start=0) ##########
+graph=standalone_m6i_t5_500k
+
+[run] pre: 500,000 nodes / 0 edges  (graph=standalone_m6i_t5_500k, workload=delete_by_uuid)
+[run] delete_by_uuid_t5_500k: 13,744 ops/s  avg=0.0657 ms/op  p95=0.0796  p99=0.1000
+[matrix] OK t5_500k
+
+########## t1_1m  (shape=add_new_node workload=add_new_node init=1000000 start=1000000) ##########
+graph=standalone_m6i_t1_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=standalone_m6i_t1_1m, workload=add_new_node)
+[run] add_new_node_t1_1m: 4,662 ops/s  avg=0.1538 ms/op  p95=0.1622  p99=0.1661
+[matrix] OK t1_1m
+
+########## t2_1m  (shape=add_new_node_with_audit workload=add_new_node_with_audit init=1000000 start=1000000) ##########
+graph=standalone_m6i_t2_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=standalone_m6i_t2_1m, workload=add_new_node_with_audit)
+[run] add_new_node_with_audit_t2_1m: 4,528 ops/s  avg=0.1591 ms/op  p95=0.1660  p99=0.1686
+[matrix] OK t2_1m
+
+########## t3_1m  (shape=add_new_node workload=upsert_w7 init=1000000 start=1000000) ##########
+graph=standalone_m6i_t3_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=standalone_m6i_t3_1m, workload=upsert_w7)
+[run] upsert_w7_t3_1m: 41 ops/s  avg=24.4685 ms/op  p95=24.9362  p99=25.0832
+[matrix] OK t3_1m
+
+########## t4_1m  (shape=add_new_node_active workload=upsert_w7_active init=1000000 start=1000000) ##########
+graph=standalone_m6i_t4_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=standalone_m6i_t4_1m, workload=upsert_w7_active)
+[run] upsert_w7_active_t4_1m: 2,018 ops/s  avg=0.4345 ms/op  p95=0.5940  p99=0.6236
+[matrix] OK t4_1m
+
+########## t5_1m  (shape=add_new_node workload=delete_by_uuid init=1000000 start=0) ##########
+graph=standalone_m6i_t5_1m
+
+[run] pre: 1,000,000 nodes / 0 edges  (graph=standalone_m6i_t5_1m, workload=delete_by_uuid)
+[run] delete_by_uuid_t5_1m: 13,694 ops/s  avg=0.0659 ms/op  p95=0.0877  p99=0.0958
+[matrix] OK t5_1m
+
+########## t1_1_5m  (shape=add_new_node workload=add_new_node init=1500000 start=1500000) ##########
+graph=standalone_m6i_t1_1_5m
+
+[run] pre: 1,500,000 nodes / 0 edges  (graph=standalone_m6i_t1_1_5m, workload=add_new_node)
+[run] add_new_node_t1_1_5m: 4,312 ops/s  avg=0.1709 ms/op  p95=0.1729  p99=0.1997
+[matrix] OK t1_1_5m
+
+########## t2_1_5m  (shape=add_new_node_with_audit workload=add_new_node_with_audit init=1500000 start=1500000) ##########
+graph=standalone_m6i_t2_1_5m
+
+[run] pre: 1,500,000 nodes / 0 edges  (graph=standalone_m6i_t2_1_5m, workload=add_new_node_with_audit)
+[run] add_new_node_with_audit_t2_1_5m: 4,180 ops/s  avg=0.1779 ms/op  p95=0.1962  p99=0.1966
+[matrix] OK t2_1_5m
+
+########## t3_1_5m  (shape=add_new_node workload=upsert_w7 init=1500000 start=1500000) ##########
+graph=standalone_m6i_t3_1_5m
+
+[run] pre: 1,500,000 nodes / 0 edges  (graph=standalone_m6i_t3_1_5m, workload=upsert_w7)
+[run] upsert_w7_t3_1_5m: 0 ops/s  avg=0.0000 ms/op  p95=0.0000  p99=0.0000
+[matrix] OK t3_1_5m
+
+########## t4_1_5m  (shape=add_new_node_active workload=upsert_w7_active init=1500000 start=1500000) ##########
+graph=standalone_m6i_t4_1_5m
+
+[matrix] FAIL init t4_1_5m
+
+########## t5_1_5m  (shape=add_new_node workload=delete_by_uuid init=1500000 start=0) ##########
+graph=standalone_m6i_t5_1_5m
+
+[run] pre: 1,500,000 nodes / 0 edges  (graph=standalone_m6i_t5_1_5m, workload=delete_by_uuid)
+[run] delete_by_uuid_t5_1_5m: 10,476 ops/s  avg=0.0883 ms/op  p95=0.1232  p99=0.1260
+[matrix] OK t5_1_5m
+
+# single-client matrix 'standalone_m6i' done in 78 min

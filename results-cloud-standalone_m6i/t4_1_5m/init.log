@@ -1,0 +1,63 @@
+[init] dropping graph 'standalone_m6i_t4_1_5m'
+[init] creating composite index :entity(uuid_hi, uuid_lo)
+[init] creating property index :entity(active)
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/ubuntu/benchmark-python/bench2/cli.py", line 192, in <module>
+    main()
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/click/core.py", line 1873, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/bench2/cli.py", line 60, in init_cmd
+    n, e = init_graph_add_new_node(client, num_nodes=nodes, indexed=indexed,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/bench2/init.py", line 201, in init_graph_add_new_node
+    client._graph.query("CREATE INDEX FOR (n:entity) ON (n.active)")
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/falkordb/graph.py", line 125, in query
+    return self._query(q, params=params, timeout=timeout, read_only=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/falkordb/graph.py", line 97, in _query
+    response = self.execute_command(*command)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/client.py", line 716, in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/client.py", line 736, in _execute_command
+    result = conn.retry.call_with_retry(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/retry.py", line 132, in call_with_retry
+    raise error
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/retry.py", line 120, in call_with_retry
+    return do()
+           ^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/client.py", line 737, in <lambda>
+    lambda: self._send_command_parse_response(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/client.py", line 682, in _send_command_parse_response
+    return self.parse_response(conn, command_name, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/client.py", line 780, in parse_response
+    response = connection.read_response()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/connection.py", line 1342, in read_response
+    response = self._parser.read_response(disable_decoding=disable_decoding)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py", line 15, in read_response
+    result = self._read_response(disable_decoding=disable_decoding)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/benchmark-python/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py", line 38, in _read_response
+    raise error
+redis.exceptions.BusyLoadingError: Redis is loading the dataset in memory

@@ -1,0 +1,25 @@
+[run] pre: 1,500,000 nodes / 0 edges  (graph=standalone_m6i_2x_t3_1_5m, workload=upsert_w7)
+[bench:upsert_w7_t3_1_5m] 25,000 pairs in 25 batches (warmup=10, batch=1000)
+[bench:upsert_w7_t3_1_5m]   batch 1 (warmup) batch_total=21303.4 ms per_op=21.303 ms
+[bench:upsert_w7_t3_1_5m]   batch 2 (warmup) batch_total=20368.9 ms per_op=20.369 ms
+[bench:upsert_w7_t3_1_5m]   batch 3 (warmup) batch_total=21745.0 ms per_op=21.745 ms
+[bench:upsert_w7_t3_1_5m]   batch 4 (warmup) batch_total=21348.7 ms per_op=21.349 ms
+[bench:upsert_w7_t3_1_5m]   batch 5 (warmup) batch_total=19415.2 ms per_op=19.415 ms
+[bench:upsert_w7_t3_1_5m]   batch 6 (warmup) batch_total=20850.5 ms per_op=20.851 ms
+[bench:upsert_w7_t3_1_5m]   batch 7 (warmup) batch_total=21340.1 ms per_op=21.340 ms
+[bench:upsert_w7_t3_1_5m]   batch 8 (warmup) batch_total=21438.1 ms per_op=21.438 ms
+[bench:upsert_w7_t3_1_5m]   batch 9 (warmup) batch_total=19534.2 ms per_op=19.534 ms
+[bench:upsert_w7_t3_1_5m]   batch 10 (warmup) batch_total=21968.9 ms per_op=21.969 ms
+[bench:upsert_w7_t3_1_5m]   batch 11 (measured) batch_total=19462.8 ms per_op=19.463 ms
+[bench:upsert_w7_t3_1_5m]   batch 12 (measured) batch_total=20559.5 ms per_op=20.559 ms
+[bench:upsert_w7_t3_1_5m]   batch 13 (measured) batch_total=19945.0 ms per_op=19.945 ms
+[bench:upsert_w7_t3_1_5m]   batch 15 avg(last5)=20.292 ms/op
+[bench:upsert_w7_t3_1_5m] batch 19 FAILED: Connection closed by server.
+[bench:upsert_w7_t3_1_5m]   batch 20 avg(last5)=21.324 ms/op
+[bench:upsert_w7_t3_1_5m] batch 20 FAILED: Error 111 connecting to r-ercqm6xbqm.instance-m3eb7h7tx.hc-2uaqqpjgg.us-east-2.aws.f2e0a955bb84.cloud:6379. Connection refused.
+[bench:upsert_w7_t3_1_5m] batch 21 FAILED: Error 111 connecting to r-ercqm6xbqm.instance-m3eb7h7tx.hc-2uaqqpjgg.us-east-2.aws.f2e0a955bb84.cloud:6379. Connection refused.
+[bench:upsert_w7_t3_1_5m] batch 22 FAILED: Redis is loading the dataset in memory
+[bench:upsert_w7_t3_1_5m] batch 23 FAILED: Redis is loading the dataset in memory
+[bench:upsert_w7_t3_1_5m] batch 24 FAILED: Redis is loading the dataset in memory
+[bench:upsert_w7_t3_1_5m]   batch 25 avg(last5)=21.324 ms/op
+[run] upsert_w7_t3_1_5m: 46 ops/s  avg=20.9493 ms/op  p95=23.0932  p99=23.0932
